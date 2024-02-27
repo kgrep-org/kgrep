@@ -11,10 +11,12 @@ This utility is designed to simplify the process of searching and analyzing logs
 
 #### Usage
 
+##### Grep logs
+
 ```bash
-kgrep [-hV] -g=<grep> -n=<namespace> -r=<resource>
-  -g, --grep-search-parameter=<grep>
-                  grep search parameter
+kgrep logs [-hV] -g=<grep> -n=<namespace> -r=<resource>
+  -p, --pattern=<grep>
+                  grep search pattern
   -h, --help      Show this help message and exit.
   -n, --namespace=<namespace>
                   The Kubernetes namespace
@@ -24,22 +26,15 @@ kgrep [-hV] -g=<grep> -n=<namespace> -r=<resource>
 
 ```
 
-#### Example
+#### Grep ConfigMaps
 
 ```bash
-kgrep -n kubeflow -r ds-pipeline -g Success
-```
-
-#### Output
-
-For each matching pod, the script retrieves and displays the pod name, the container name, and the log messages containing the
-specified `grep-search-parameter`.
-
-```bash
-ds-pipeline-persistenceagent-sample-cbd7d67f8-tmqw7/ds-pipeline-persistenceagent: time="2024-02-27T16:02:59Z" level=info msg="Success while syncing resource (kubeflow/iris-pipeline-f0d3e)"
-ds-pipeline-persistenceagent-sample-cbd7d67f8-tmqw7/ds-pipeline-persistenceagent: time="2024-02-27T16:02:59Z" level=info msg="Success while syncing resource (kubeflow/iris-pipeline-d74a4)"
-ds-pipeline-persistenceagent-sample-cbd7d67f8-tmqw7/ds-pipeline-persistenceagent: time="2024-02-27T16:02:59Z" level=info msg="Success while syncing resource (kubeflow/iris-pipeline-fefd9)"
-ds-pipeline-persistenceagent-sample-cbd7d67f8-tmqw7/ds-pipeline-persistenceagent: time="2024-02-27T16:02:59Z" level=info msg="Success while syncing resource (kubeflow/iris-pipeline-b8841)"
+kgrep configmaps [-hV] -n=<namespace> -p=<pattern>
+  -h, --help                Show this help message and exit.
+  -n, --namespace=<namespace>
+                            The Kubernetes namespace
+  -p, --pattern=<pattern>   grep search pattern
+  -V, --version             Print version information and exit.
 ```
 
 ## Building the project
