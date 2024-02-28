@@ -1,0 +1,15 @@
+apiVersion: v1
+data:
+  viewer-pod-template.json: |-
+    {
+        "spec": {
+            "serviceAccountName": "ds-pipelines-viewer-sample"
+        }
+    }
+kind: ConfigMap
+metadata:
+  creationTimestamp: "2024-02-26T19:47:50Z"
+  name: "custom-ui-configmap"
+  namespace: "kubeflow"
+  resourceVersion: "43006931"
+  uid: 50d35333-c822-4fc8-b60b-1a7e085f5d04

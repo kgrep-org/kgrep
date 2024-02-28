@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @WithKubernetesTestServer
 @QuarkusTest
-class KgrepTest {
+class LogGrepperTest {
 
     private static final String NAMESPACE = "test";
 
@@ -28,17 +28,17 @@ class KgrepTest {
 
     @Inject
     @TestMode
-    Kgrep kgrep;
+    LogGrepper logGrepper;
 
     @Inject
     @TestMode
     FakeLogReader fakeLogReader;
 
     @Test
-    public void testInteractionWithAPIServer() {
+    void testInteractionWithAPIServer() {
         createPods();
 
-        assertThat(kgrep.run(NAMESPACE, "pod", "initialized")).containsExactlyInAnyOrder(
+        assertThat(logGrepper.grep(NAMESPACE, "pod", "initialized")).containsExactlyInAnyOrder(
                 new LogMessage("pod1", "container1", "xpto initialized"),
                 new LogMessage("pod2", "container2", "foo initialized"),
                 new LogMessage("pod2", "container2", "bar initialized")

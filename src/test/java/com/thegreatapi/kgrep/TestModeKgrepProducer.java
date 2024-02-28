@@ -10,12 +10,15 @@ class TestModeKgrepProducer {
     KubernetesClient kubernetesClient;
 
     @Inject
+    Grep grep;
+
+    @Inject
     @TestMode
     FakeLogReader fakeLogReader;
 
     @Produces
     @TestMode
-    Kgrep produceKgrep() {
-        return new Kgrep(kubernetesClient, fakeLogReader);
+    LogGrepper produceKgrep() {
+        return new LogGrepper(kubernetesClient, fakeLogReader, grep);
     }
 }
