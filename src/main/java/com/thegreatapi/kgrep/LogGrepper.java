@@ -43,8 +43,10 @@ class LogGrepper {
 
         String log = logReader.read(namespace, podName, container.getName());
 
-        return grep.run(log.split(System.lineSeparator()), pattern).stream()
-                .map(line -> new LogMessage(podName, container.getName(), line))
+        List<Occurrence> occurrences = grep.run(log.split(System.lineSeparator()), pattern);
+
+        return occurrences.stream()
+                .map(occurrence -> new LogMessage(podName, container.getName(), occurrence.text(), occurrence.lineNumber()))
                 .toList();
     }
 }

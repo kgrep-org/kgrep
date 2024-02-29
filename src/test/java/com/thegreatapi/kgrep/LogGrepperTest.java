@@ -39,9 +39,9 @@ class LogGrepperTest {
         createPods();
 
         assertThat(logGrepper.grep(NAMESPACE, "pod", "initialized")).containsExactlyInAnyOrder(
-                new LogMessage("pod1", "container1", "xpto initialized"),
-                new LogMessage("pod2", "container2", "foo initialized"),
-                new LogMessage("pod2", "container2", "bar initialized")
+                new LogMessage("pod1", "container1", "xpto initialized", 2),
+                new LogMessage("pod2", "container2", "foo initialized", 2),
+                new LogMessage("pod2", "container2", "bar initialized",5)
         );
     }
 

@@ -1,4 +1,4 @@
 package com.thegreatapi.kgrep;
 
-record LogMessage(String podName, String containerName, String message) {
+record LogMessage(String podName, String containerName, String message, int lineNumber) {
 }

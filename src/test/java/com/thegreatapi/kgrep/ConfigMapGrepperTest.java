@@ -38,11 +38,11 @@ class ConfigMapGrepperTest {
 
         assertThat(occurrences)
                 .containsExactlyInAnyOrder(
-                        new ResourceLine("configmaps/custom-ui-configmap", "  namespace: \"kubeflow\""),
-                        new ResourceLine("configmaps/kfp-launcher", "      \\ http://minio-sample.kubeflow.svc.cluster.local:9000\\\\n  region: minio\\\\n \\"),
-                        new ResourceLine("configmaps/kfp-launcher", "      :\\\"data-science-pipelines\\\"},\\\"name\\\":\\\"kfp-launcher\\\",\\\"namespace\\\":\\\"kubeflow\\\"\\"),
-                        new ResourceLine("configmaps/kfp-launcher", "  namespace: \"kubeflow\""),
-                        new ResourceLine("configmaps/kfp-launcher", "  providers: \"s3:\\n  endpoint: http://minio-sample.kubeflow.svc.cluster.local:9000\\n\\")
+                        new ResourceLine("configmaps/custom-ui-configmap", 8, "  namespace: \"kubeflow\""),
+                        new ResourceLine("configmaps/kfp-launcher", 8, "      \\ http://minio-sample.kubeflow.svc.cluster.local:9000\\\\n  region: minio\\\\n \\"),
+                        new ResourceLine("configmaps/kfp-launcher", 12, "      :\\\"data-science-pipelines\\\"},\\\"name\\\":\\\"kfp-launcher\\\",\\\"namespace\\\":\\\"kubeflow\\\"\\"),
+                        new ResourceLine("configmaps/kfp-launcher", 23, "  namespace: \"kubeflow\""),
+                        new ResourceLine("configmaps/kfp-launcher", 35, "  providers: \"s3:\\n  endpoint: http://minio-sample.kubeflow.svc.cluster.local:9000\\n\\")
                 );
     }
 
