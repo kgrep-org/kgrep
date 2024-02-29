@@ -3,6 +3,8 @@ package com.thegreatapi.kgrep;
 import jakarta.inject.Inject;
 import picocli.CommandLine;
 
+import java.text.MessageFormat;
+
 @CommandLine.Command(name = "logs", mixinStandardHelpOptions = true)
 class LogsCommand implements Runnable {
 
@@ -36,7 +38,15 @@ class LogsCommand implements Runnable {
     }
 
     private static void print(LogMessage logMessage) {
-        System.out.println(BLUE + logMessage.podName() + PURPLE + "/" + logMessage.containerName() + ANSI_RESET
-                + ": " + logMessage.message());
+        String output = MessageFormat.format("{0}{1}{2}/{3}[{4}]:{5} {6}",
+                BLUE,
+                logMessage.podName(),
+                PURPLE,
+                logMessage.containerName(),
+                logMessage.lineNumber(),
+                ANSI_RESET,
+                logMessage.message());
+
+        System.out.println(output);
     }
 }

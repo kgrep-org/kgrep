@@ -2,15 +2,20 @@ package com.thegreatapi.kgrep;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 @ApplicationScoped
 class Grep {
 
-    List<String> run(String[] lines, String pattern) {
-        return Arrays.stream(lines)
-                .filter(line -> line.contains(pattern))
-                .toList();
+    List<Occurrence> run(String[] lines, String pattern) {
+        List<Occurrence> list = new ArrayList<>();
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i];
+            if (line.contains(pattern)) {
+                list.add(new Occurrence(i + 1, line));
+            }
+        }
+        return list;
     }
 }

@@ -38,7 +38,7 @@ class ConfigMapGrepper {
                     String[] lines = getYaml(configMap).split(System.lineSeparator());
 
                     grep.run(lines, pattern).stream()
-                            .map(line -> createResourceLine(configMap, line))
+                            .map(occurrence -> createResourceLine(configMap, occurrence))
                             .forEach(occurrences::add);
                 });
             }
@@ -61,8 +61,8 @@ class ConfigMapGrepper {
         }
     }
 
-    private static ResourceLine createResourceLine(ConfigMap configMap, String line) {
+    private static ResourceLine createResourceLine(ConfigMap configMap, Occurrence occurrence) {
         return new ResourceLine(configMap.getFullResourceName() + "/" + configMap.getMetadata().getName(),
-                line);
+                occurrence.lineNumber(), occurrence.text());
     }
 }

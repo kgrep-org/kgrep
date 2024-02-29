@@ -17,16 +17,16 @@ class GrepTest {
     @Test
     void run() {
         String[] lines = new String[]{
-                "one line",
+                "one text",
                 "two lines",
-                "a line ending with kgrep",
+                "a text ending with kgrep",
                 "kgrep in the beginning"
         };
 
-        List<String> occurrences = grep.run(lines, "kgrep");
+        List<Occurrence> occurrences = grep.run(lines, "kgrep");
 
         assertThat(occurrences).containsExactlyInAnyOrder(
-                "a line ending with kgrep",
-                "kgrep in the beginning");
+                new Occurrence(3, "a text ending with kgrep"),
+                new Occurrence(4, "kgrep in the beginning"));
     }
 }

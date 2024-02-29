@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.inject.Inject;
 import picocli.CommandLine;
 
+import java.text.MessageFormat;
 import java.util.List;
 
 @CommandLine.Command(name = "configmaps", mixinStandardHelpOptions = true)
@@ -41,6 +42,14 @@ class ConfigMapsCommand implements Runnable {
     }
 
     private static void print(ResourceLine resourceLine) {
-        System.out.println(BLUE + resourceLine.resourceName() + ANSI_RESET + ": " + resourceLine.line());
+        String output = MessageFormat.format("{0}{1}[{2}]:{3} {4}",
+                BLUE,
+                resourceLine.resourceName(),
+                resourceLine.lineNumber(),
+                ANSI_RESET,
+                resourceLine.text()
+        );
+
+        System.out.println(output);
     }
 }
