@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ConfigMapGrepperTest {
 
     private static final String NAMESPACE = "kubeflow";
+
     @Inject
     KubernetesClient client;
 
@@ -52,13 +53,9 @@ class ConfigMapGrepperTest {
     }
 
     private void createConfigMap(String yamlOrJson) {
-        InputStream stream = getResourceAsStream(yamlOrJson);
+        InputStream stream = KubernetesTestsUtil.getResourceAsStream(yamlOrJson);
         ConfigMap configMap = client.configMaps().load(stream).item();
 
         client.configMaps().resource(configMap).create();
-    }
-
-    private static InputStream getResourceAsStream(String yamlOrJson) {
-        return ConfigMapGrepperTest.class.getClassLoader().getResourceAsStream(yamlOrJson);
     }
 }
