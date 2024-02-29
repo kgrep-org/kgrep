@@ -1,0 +1,360 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    k8s.v1.cni.cncf.io/network-status: |-
+      [{
+          "name": "openshift-sdn",
+          "interface": "eth0",
+          "ips": [
+              "10.131.0.171"
+          ],
+          "default": true,
+          "dns": {}
+      }]
+    openshift.io/scc: restricted-v2
+    seccomp.security.alpha.kubernetes.io/pod: runtime/default
+  creationTimestamp: "2024-02-26T19:48:09Z"
+  generateName: ds-pipeline-sample-7b59bd7cb4-
+  labels:
+    app: ds-pipeline-sample
+    component: data-science-pipelines
+    dspa: sample
+    pod-template-hash: 7b59bd7cb4
+  name: ds-pipeline-sample-7b59bd7cb4-szxqb
+  namespace: kubeflow
+  ownerReferences:
+  - apiVersion: apps/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: ReplicaSet
+    name: ds-pipeline-sample-7b59bd7cb4
+    uid: 98eef161-e46b-42ff-9dcd-ee350d75847f
+  resourceVersion: "43007638"
+  uid: aea6b1cc-b131-48da-8289-f32bbad5f0e6
+spec:
+  containers:
+  - env:
+    - name: POD_NAMESPACE
+      value: kubeflow
+    - name: DBCONFIG_USER
+      value: mlpipeline
+    - name: DBCONFIG_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          key: password
+          name: testdbsecret
+    - name: DBCONFIG_DBNAME
+      value: randomDBName
+    - name: DBCONFIG_HOST
+      value: mariadb-sample.kubeflow.svc.cluster.local
+    - name: DBCONFIG_PORT
+      value: "3306"
+    - name: AUTO_UPDATE_PIPELINE_DEFAULT_VERSION
+      value: "true"
+    - name: DBCONFIG_CONMAXLIFETIMESEC
+      value: "120"
+    - name: ML_PIPELINE_VISUALIZATIONSERVER_SERVICE_HOST
+      value: ds-pipeline-visualizationserver
+    - name: ML_PIPELINE_VISUALIZATIONSERVER_SERVICE_PORT
+      value: "8888"
+    - name: OBJECTSTORECONFIG_CREDENTIALSSECRET
+      value: teststoragesecret
+    - name: OBJECTSTORECONFIG_CREDENTIALSACCESSKEYKEY
+      value: AWS_ACCESS_KEY_ID
+    - name: OBJECTSTORECONFIG_CREDENTIALSSECRETKEYKEY
+      value: AWS_SECRET_ACCESS_KEY
+    - name: DEFAULTPIPELINERUNNERSERVICEACCOUNT
+      value: pipeline-runner-sample
+    - name: OBJECTSTORECONFIG_BUCKETNAME
+      value: mlpipeline
+    - name: OBJECTSTORECONFIG_ACCESSKEY
+      valueFrom:
+        secretKeyRef:
+          key: AWS_ACCESS_KEY_ID
+          name: teststoragesecret
+    - name: OBJECTSTORECONFIG_SECRETACCESSKEY
+      valueFrom:
+        secretKeyRef:
+          key: AWS_SECRET_ACCESS_KEY
+          name: teststoragesecret
+    - name: OBJECTSTORECONFIG_SECURE
+      value: "false"
+    - name: MINIO_SERVICE_SERVICE_HOST
+      value: minio-sample.kubeflow.svc.cluster.local
+    - name: MINIO_SERVICE_SERVICE_PORT
+      value: "9000"
+    - name: V2_LAUNCHER_IMAGE
+      value: quay.io/hbelmiro/dsp-launcher:dev-1708976025
+    - name: V2_DRIVER_IMAGE
+      value: quay.io/opendatahub/ds-pipelines-driver:latest
+    - name: ML_PIPELINE_SERVICE_HOST
+      value: ds-pipeline-sample.kubeflow.svc.cluster.local
+    - name: ML_PIPELINE_SERVICE_PORT_GRPC
+      value: "8887"
+    - name: EXECUTIONTYPE
+      value: PipelineRun
+    - name: CACHE_IMAGE
+      value: registry.access.redhat.com/ubi8/ubi-minimal
+    - name: MOVERESULTS_IMAGE
+      value: busybox
+    - name: ARTIFACT_IMAGE
+      value: quay.io/modh/odh-ml-pipelines-artifact-manager-container:v1.18.0-8
+    - name: ARTIFACT_BUCKET
+      value: mlpipeline
+    - name: ARTIFACT_ENDPOINT
+      value: http://minio-sample.kubeflow.svc.cluster.local:9000
+    - name: ARTIFACT_SCRIPT
+      valueFrom:
+        configMapKeyRef:
+          key: somekey
+          name: custom-artifact-script
+    - name: ARCHIVE_LOGS
+      value: "false"
+    - name: TRACK_ARTIFACTS
+      value: "true"
+    - name: STRIP_EOF
+      value: "true"
+    - name: PIPELINE_RUNTIME
+      value: tekton
+    - name: INJECT_DEFAULT_SCRIPT
+      value: "true"
+    - name: APPLY_TEKTON_CUSTOM_RESOURCE
+      value: "true"
+    - name: TERMINATE_STATUS
+      value: Cancelled
+    image: quay.io/modh/odh-ml-pipelines-api-server-container:v1.18.0-8
+    imagePullPolicy: Always
+    livenessProbe:
+      exec:
+        command:
+        - wget
+        - -q
+        - -S
+        - -O
+        - '-'
+        - http://localhost:8888/apis/v1beta1/healthz
+      failureThreshold: 3
+      initialDelaySeconds: 3
+      periodSeconds: 5
+      successThreshold: 1
+      timeoutSeconds: 2
+    name: ds-pipeline-api-server
+    ports:
+    - containerPort: 8888
+      name: http
+      protocol: TCP
+    - containerPort: 8887
+      name: grpc
+      protocol: TCP
+    readinessProbe:
+      exec:
+        command:
+        - wget
+        - -q
+        - -S
+        - -O
+        - '-'
+        - http://localhost:8888/apis/v1beta1/healthz
+      failureThreshold: 3
+      initialDelaySeconds: 3
+      periodSeconds: 5
+      successThreshold: 1
+      timeoutSeconds: 2
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1Gi
+      requests:
+        cpu: 250m
+        memory: 500Mi
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      runAsNonRoot: true
+      runAsUser: 1000710000
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: File
+    volumeMounts:
+    - mountPath: /config/sample_config.json
+      name: sample-config
+      subPath: sample_config.json
+    - mountPath: /samples/
+      name: sample-pipeline
+    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      name: kube-api-access-b88lq
+      readOnly: true
+  - args:
+    - --https-address=:8443
+    - --provider=openshift
+    - --openshift-service-account=ds-pipeline-sample
+    - --upstream=http://localhost:8888
+    - --tls-cert=/etc/tls/private/tls.crt
+    - --tls-key=/etc/tls/private/tls.key
+    - --cookie-secret=SECRET
+    - '--openshift-delegate-urls={"/": {"group":"route.openshift.io","resource":"routes","verb":"get","name":"ds-pipeline-sample","namespace":"kubeflow"}}'
+    - --openshift-sar={"namespace":"kubeflow","resource":"routes","resourceName":"ds-pipeline-sample","verb":"get","resourceAPIGroup":"route.openshift.io"}
+    - --skip-auth-regex='(^/metrics|^/apis/v1beta1/healthz)'
+    image: registry.redhat.io/openshift4/ose-oauth-proxy@sha256:ab112105ac37352a2a4916a39d6736f5db6ab4c29bad4467de8d613e80e9bb33
+    imagePullPolicy: IfNotPresent
+    livenessProbe:
+      failureThreshold: 3
+      httpGet:
+        path: /oauth/healthz
+        port: oauth
+        scheme: HTTPS
+      initialDelaySeconds: 30
+      periodSeconds: 5
+      successThreshold: 1
+      timeoutSeconds: 1
+    name: oauth-proxy
+    ports:
+    - containerPort: 8443
+      name: oauth
+      protocol: TCP
+    readinessProbe:
+      failureThreshold: 3
+      httpGet:
+        path: /oauth/healthz
+        port: oauth
+        scheme: HTTPS
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      successThreshold: 1
+      timeoutSeconds: 1
+    resources:
+      limits:
+        cpu: 100m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      runAsNonRoot: true
+      runAsUser: 1000710000
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: File
+    volumeMounts:
+    - mountPath: /etc/tls/private
+      name: proxy-tls
+    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      name: kube-api-access-b88lq
+      readOnly: true
+  dnsPolicy: ClusterFirst
+  enableServiceLinks: true
+  nodeName: hbelmiro-5-d95dd-worker-0-wccsf
+  preemptionPolicy: PreemptLowerPriority
+  priority: 0
+  restartPolicy: Always
+  schedulerName: default-scheduler
+  securityContext:
+    fsGroup: 1000710000
+    seLinuxOptions:
+      level: s0:c27,c4
+    seccompProfile:
+      type: RuntimeDefault
+  serviceAccount: ds-pipeline-sample
+  serviceAccountName: ds-pipeline-sample
+  terminationGracePeriodSeconds: 30
+  tolerations:
+  - effect: NoExecute
+    key: node.kubernetes.io/not-ready
+    operator: Exists
+    tolerationSeconds: 300
+  - effect: NoExecute
+    key: node.kubernetes.io/unreachable
+    operator: Exists
+    tolerationSeconds: 300
+  - effect: NoSchedule
+    key: node.kubernetes.io/memory-pressure
+    operator: Exists
+  volumes:
+  - name: proxy-tls
+    secret:
+      defaultMode: 420
+      secretName: ds-pipelines-proxy-tls-sample
+  - configMap:
+      defaultMode: 420
+      name: sample-config-sample
+    name: sample-config
+  - configMap:
+      defaultMode: 420
+      name: sample-pipeline-sample
+    name: sample-pipeline
+  - name: kube-api-access-b88lq
+    projected:
+      defaultMode: 420
+      sources:
+      - serviceAccountToken:
+          expirationSeconds: 3607
+          path: token
+      - configMap:
+          items:
+          - key: ca.crt
+            path: ca.crt
+          name: kube-root-ca.crt
+      - downwardAPI:
+          items:
+          - fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+            path: namespace
+      - configMap:
+          items:
+          - key: service-ca.crt
+            path: service-ca.crt
+          name: openshift-service-ca.crt
+status:
+  conditions:
+  - lastProbeTime: null
+    lastTransitionTime: "2024-02-26T19:48:09Z"
+    status: "True"
+    type: Initialized
+  - lastProbeTime: null
+    lastTransitionTime: "2024-02-26T19:48:20Z"
+    status: "True"
+    type: Ready
+  - lastProbeTime: null
+    lastTransitionTime: "2024-02-26T19:48:20Z"
+    status: "True"
+    type: ContainersReady
+  - lastProbeTime: null
+    lastTransitionTime: "2024-02-26T19:48:09Z"
+    status: "True"
+    type: PodScheduled
+  containerStatuses:
+  - containerID: cri-o://705afde2b771b78574482078073bf0442b092bde8bfdbd9efff565f90a557630
+    image: quay.io/modh/odh-ml-pipelines-api-server-container:v1.18.0-8
+    imageID: quay.io/modh/odh-ml-pipelines-api-server-container@sha256:8d5f8264374dc438573f3e80eac3ecb288b969ecc946cd5766df481cda1819ac
+    lastState: {}
+    name: ds-pipeline-api-server
+    ready: true
+    restartCount: 0
+    started: true
+    state:
+      running:
+        startedAt: "2024-02-26T19:48:12Z"
+  - containerID: cri-o://536153f2a7cca0dc0e55e9a37dc2de6710aae35daecc263de17691735ca79e31
+    image: registry.redhat.io/openshift4/ose-oauth-proxy@sha256:ab112105ac37352a2a4916a39d6736f5db6ab4c29bad4467de8d613e80e9bb33
+    imageID: registry.redhat.io/openshift4/ose-oauth-proxy@sha256:ab112105ac37352a2a4916a39d6736f5db6ab4c29bad4467de8d613e80e9bb33
+    lastState: {}
+    name: oauth-proxy
+    ready: true
+    restartCount: 0
+    started: true
+    state:
+      running:
+        startedAt: "2024-02-26T19:48:13Z"
+  hostIP: 192.168.1.120
+  phase: Running
+  podIP: 10.131.0.171
+  podIPs:
+  - ip: 10.131.0.171
+  qosClass: Burstable
+  startTime: "2024-02-26T19:48:09Z"
