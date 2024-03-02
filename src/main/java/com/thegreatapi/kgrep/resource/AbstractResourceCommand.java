@@ -1,6 +1,5 @@
 package com.thegreatapi.kgrep.resource;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import picocli.CommandLine;
 
 import java.text.MessageFormat;

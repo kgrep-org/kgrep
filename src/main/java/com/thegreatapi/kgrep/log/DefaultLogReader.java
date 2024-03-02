@@ -1,6 +1,5 @@
 package com.thegreatapi.kgrep.log;
 
-import com.thegreatapi.kgrep.log.LogReader;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import jakarta.enterprise.context.ApplicationScoped;
 

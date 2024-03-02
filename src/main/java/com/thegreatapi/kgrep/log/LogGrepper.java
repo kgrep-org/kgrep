@@ -1,7 +1,7 @@
 package com.thegreatapi.kgrep.log;
 
-import com.thegreatapi.kgrep.grep.Occurrence;
 import com.thegreatapi.kgrep.grep.Grep;
+import com.thegreatapi.kgrep.grep.Occurrence;
 import io.fabric8.kubernetes.api.model.ContainerStatus;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.KubernetesClient;
