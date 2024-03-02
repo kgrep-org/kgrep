@@ -1,4 +1,4 @@
-name: Main
+name: Release
 
 on:
   push:
@@ -6,15 +6,43 @@ on:
       - "v*.*.*"
 
 jobs:
-  build:
+  publish-linux-binary:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Build
-        run: ./mvnw package -Pnative -DskipTests && mv target/kgrep-*-runner target/kgrep
+      - uses: actions/checkout@v4
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+      - name: Build with Maven - JDK
+        run: mvn -B package -DskipTests
+      - name: Rename file
+        run: mv /home/runner/work/kgrep/kgrep/target/kgrep-1.0.0-SNAPSHOT.jar /home/runner/work/kgrep/kgrep/target/kgrep-linux
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: target/kgrep-*-runner target/kgrep
+          #name: '${{ github.ref_name }}'
+          files: /home/runner/work/kgrep/kgrep/target/kgrep-linux
+  publish-macos-binary:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+      - name: Build with Maven - JDK
+        run: mvn -B package -DskipTests
+      - name: Rename file
+        run: mv /Users/runner/work/kgrep/kgrep/target/kgrep-1.0.0-SNAPSHOT.jar /Users/runner/work/kgrep/kgrep/target/kgrep-macos
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          #name: '${{ github.ref_name }}-macos'
+          files: /home/runner/work/kgrep/kgrep/target/kgrep-macos
