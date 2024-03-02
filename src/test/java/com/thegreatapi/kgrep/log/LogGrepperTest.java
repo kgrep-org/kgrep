@@ -1,6 +1,7 @@
-package com.thegreatapi.kgrep;
+package com.thegreatapi.kgrep.log;
 
-import com.thegreatapi.kgrep.FakeLogReader.RegistryKey;
+import com.thegreatapi.kgrep.TestMode;
+import com.thegreatapi.kgrep.log.FakeLogReader.RegistryKey;
 import io.fabric8.kubernetes.api.model.ContainerState;
 import io.fabric8.kubernetes.api.model.ContainerStateBuilder;
 import io.fabric8.kubernetes.api.model.ContainerStatus;

@@ -1,6 +1,8 @@
-package com.thegreatapi.kgrep;
+package com.thegreatapi.kgrep.pod;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.thegreatapi.kgrep.grep.Grep;
+import com.thegreatapi.kgrep.resource.ResourceGrepper;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodList;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -10,7 +12,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 @ApplicationScoped
-class PodGrepper extends ResourceGrepper<Pod, PodList, PodResource> {
+public final class PodGrepper extends ResourceGrepper<Pod, PodList, PodResource> {
 
     private final KubernetesClient client;
 
@@ -21,7 +23,7 @@ class PodGrepper extends ResourceGrepper<Pod, PodList, PodResource> {
     }
 
     @Override
-    MixedOperation<Pod, PodList, PodResource> getResources() {
+    public MixedOperation<Pod, PodList, PodResource> getResources() {
         return client.pods();
     }
 }

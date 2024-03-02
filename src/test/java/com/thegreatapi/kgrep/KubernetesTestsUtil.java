@@ -2,12 +2,12 @@ package com.thegreatapi.kgrep;
 
 import java.io.InputStream;
 
-final class KubernetesTestsUtil {
+public final class KubernetesTestsUtil {
 
     private KubernetesTestsUtil() {
     }
 
-    static InputStream getResourceAsStream(String yamlOrJson) {
-        return ConfigMapGrepperTest.class.getClassLoader().getResourceAsStream(yamlOrJson);
+    public static InputStream getResourceAsStream(String yamlOrJson) {
+        return KubernetesTestsUtil.class.getClassLoader().getResourceAsStream(yamlOrJson);
     }
 }

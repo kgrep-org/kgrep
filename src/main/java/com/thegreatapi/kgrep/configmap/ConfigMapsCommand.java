@@ -1,10 +1,11 @@
-package com.thegreatapi.kgrep;
+package com.thegreatapi.kgrep.configmap;
 
+import com.thegreatapi.kgrep.resource.AbstractResourceCommand;
 import jakarta.inject.Inject;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "configmaps", mixinStandardHelpOptions = true)
-class ConfigMapsCommand extends AbstractResourceCommand implements Runnable {
+public final class ConfigMapsCommand extends AbstractResourceCommand implements Runnable {
 
     @Inject
     ConfigMapsCommand(ConfigMapGrepper configMapGrepper) {

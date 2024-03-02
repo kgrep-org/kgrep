@@ -1,4 +1,4 @@
-package com.thegreatapi.kgrep;
+package com.thegreatapi.kgrep.grep;
 
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;

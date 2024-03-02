@@ -1,5 +1,6 @@
-package com.thegreatapi.kgrep;
+package com.thegreatapi.kgrep.log;
 
+import com.thegreatapi.kgrep.TestMode;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import java.util.HashMap;
@@ -7,7 +8,7 @@ import java.util.Map;
 
 @ApplicationScoped
 @TestMode
-class FakeLogReader implements LogReader {
+public final class FakeLogReader implements LogReader {
 
     private final Map<RegistryKey, String> logRegistry = new HashMap<>();
 
