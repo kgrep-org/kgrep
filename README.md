@@ -2,7 +2,7 @@
 
 #### Overview
 
-This utility is designed to simplify the process of searching and analyzing logs from multiple Kubernetes pods.
+This utility is designed to simplify the process of searching and analyzing logs and resources in Kubernetes.
 
 #### Prerequisites
 
@@ -11,31 +11,7 @@ This utility is designed to simplify the process of searching and analyzing logs
 
 #### Usage
 
-##### Grep logs
-
-```bash
-kgrep logs [-hV] -g=<grep> -n=<namespace> -r=<resource>
-  -p, --pattern=<grep>
-                  grep search pattern
-  -h, --help      Show this help message and exit.
-  -n, --namespace=<namespace>
-                  The Kubernetes namespace
-  -r, --resource-name=<resource>
-                  Resource
-  -V, --version   Print version information and exit.
-
-```
-
-#### Grep ConfigMaps
-
-```bash
-kgrep configmaps [-hV] -n=<namespace> -p=<pattern>
-  -h, --help                Show this help message and exit.
-  -n, --namespace=<namespace>
-                            The Kubernetes namespace
-  -p, --pattern=<pattern>   grep search pattern
-  -V, --version             Print version information and exit.
-```
+Type `kgrep --help` to check the commands.
 
 ## Building the project
 
@@ -83,5 +59,7 @@ Or, if you don't have GraalVM installed, you can run the native executable build
 ```
 
 You can then execute your native executable with: `./target/kgrep-1.0.0-SNAPSHOT-runner`
+
+Rename the `./target/kgrep-1.0.0-SNAPSHOT-runner` executable file to `kgrep` and add it to your PATH.
 
 If you want to learn more about building native executables, please consult https://quarkus.io/guides/maven-tooling.
