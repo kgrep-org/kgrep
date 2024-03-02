@@ -1,6 +1,8 @@
-package com.thegreatapi.kgrep;
+package com.thegreatapi.kgrep.pod;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.thegreatapi.kgrep.KubernetesTestsUtil;
+import com.thegreatapi.kgrep.resource.ResourceLine;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.quarkus.test.junit.QuarkusTest;

@@ -1,6 +1,8 @@
-package com.thegreatapi.kgrep;
+package com.thegreatapi.kgrep.configmap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.thegreatapi.kgrep.grep.Grep;
+import com.thegreatapi.kgrep.resource.ResourceGrepper;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapList;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -19,7 +21,7 @@ class ConfigMapGrepper extends ResourceGrepper<ConfigMap, ConfigMapList, Resourc
     }
 
     @Override
-    MixedOperation<ConfigMap, ConfigMapList, Resource<ConfigMap>> getResources() {
+    public MixedOperation<ConfigMap, ConfigMapList, Resource<ConfigMap>> getResources() {
         return client.configMaps();
     }
 }

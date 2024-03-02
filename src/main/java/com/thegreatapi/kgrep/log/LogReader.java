@@ -1,4 +1,4 @@
-package com.thegreatapi.kgrep;
+package com.thegreatapi.kgrep.log;
 
 interface LogReader {
 

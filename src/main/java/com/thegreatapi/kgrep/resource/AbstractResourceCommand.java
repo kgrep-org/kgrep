@@ -1,4 +1,4 @@
-package com.thegreatapi.kgrep;
+package com.thegreatapi.kgrep.resource;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import picocli.CommandLine;
@@ -6,7 +6,7 @@ import picocli.CommandLine;
 import java.text.MessageFormat;
 import java.util.List;
 
-abstract class AbstractResourceCommand implements Runnable {
+public abstract class AbstractResourceCommand implements Runnable {
 
     private static final String ANSI_RESET = "\u001B[0m";
 
@@ -20,7 +20,7 @@ abstract class AbstractResourceCommand implements Runnable {
 
     private final ResourceGrepper<?, ?, ?> resourceGrepper;
 
-    AbstractResourceCommand(ResourceGrepper<?, ?, ?> resourceGrepper) {
+    protected AbstractResourceCommand(ResourceGrepper<?, ?, ?> resourceGrepper) {
         this.resourceGrepper = resourceGrepper;
     }
 
@@ -29,8 +29,6 @@ abstract class AbstractResourceCommand implements Runnable {
         try {
             List<ResourceLine> occurrences = resourceGrepper.grep(namespace, pattern);
             occurrences.forEach(AbstractResourceCommand::print);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException(e);

@@ -1,5 +1,7 @@
-package com.thegreatapi.kgrep;
+package com.thegreatapi.kgrep.log;
 
+import com.thegreatapi.kgrep.grep.Occurrence;
+import com.thegreatapi.kgrep.grep.Grep;
 import io.fabric8.kubernetes.api.model.ContainerStatus;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -11,7 +13,7 @@ import java.util.Collections;
 import java.util.List;
 
 @ApplicationScoped
-class LogGrepper {
+public final class LogGrepper {
 
     private final KubernetesClient kubernetesClient;
 
@@ -20,7 +22,7 @@ class LogGrepper {
     private final Grep grep;
 
     @Inject
-    LogGrepper(KubernetesClient kubernetesClient, LogReader logReader, Grep grep) {
+    public LogGrepper(KubernetesClient kubernetesClient, LogReader logReader, Grep grep) {
         this.kubernetesClient = kubernetesClient;
         this.logReader = logReader;
         this.grep = grep;

@@ -1,4 +1,4 @@
-package com.thegreatapi.kgrep;
+package com.thegreatapi.kgrep.grep;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -6,9 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @ApplicationScoped
-class Grep {
+public final class Grep {
 
-    List<Occurrence> run(String[] lines, String pattern) {
+    public List<Occurrence> run(String[] lines, String pattern) {
         List<Occurrence> list = new ArrayList<>();
         for (int i = 0; i < lines.length; i++) {
             String line = lines[i];

@@ -1,7 +1,9 @@
-package com.thegreatapi.kgrep;
+package com.thegreatapi.kgrep.resource;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.thegreatapi.kgrep.grep.Occurrence;
+import com.thegreatapi.kgrep.grep.Grep;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
@@ -13,7 +15,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-abstract class ResourceGrepper<T extends HasMetadata, L extends KubernetesResourceList<T>, R extends Resource<T>> {
+public abstract class ResourceGrepper<T extends HasMetadata, L extends KubernetesResourceList<T>, R extends Resource<T>> {
 
     private final ObjectMapper mapper;
 
@@ -29,14 +31,14 @@ abstract class ResourceGrepper<T extends HasMetadata, L extends KubernetesResour
         this.grep = null;
     }
 
-    ResourceGrepper(ObjectMapper mapper, Grep grep) {
+    protected ResourceGrepper(ObjectMapper mapper, Grep grep) {
         this.mapper = mapper;
         this.grep = grep;
     }
 
-    abstract MixedOperation<T, L, R> getResources();
+    public abstract MixedOperation<T, L, R> getResources();
 
-    List<ResourceLine> grep(String namespace, String pattern) throws JsonProcessingException, InterruptedException {
+    public List<ResourceLine> grep(String namespace, String pattern) throws InterruptedException {
         List<T> configMaps = getResources().inNamespace(namespace).list().getItems();
 
         List<ResourceLine> occurrences = new ArrayList<>();
