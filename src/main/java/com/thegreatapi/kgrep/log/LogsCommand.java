@@ -1,11 +1,12 @@
 package com.thegreatapi.kgrep.log;
 
+import com.thegreatapi.kgrep.VersionProvider;
 import jakarta.inject.Inject;
 import picocli.CommandLine;
 
 import java.text.MessageFormat;
 
-@CommandLine.Command(name = "logs", mixinStandardHelpOptions = true)
+@CommandLine.Command(name = "logs", mixinStandardHelpOptions = true, versionProvider = VersionProvider.class)
 public final class LogsCommand implements Runnable {
 
     private static final String ANSI_RESET = "\u001B[0m";

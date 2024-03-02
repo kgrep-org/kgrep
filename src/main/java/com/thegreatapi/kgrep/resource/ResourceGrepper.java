@@ -2,8 +2,8 @@ package com.thegreatapi.kgrep.resource;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.thegreatapi.kgrep.grep.Occurrence;
 import com.thegreatapi.kgrep.grep.Grep;
+import com.thegreatapi.kgrep.grep.Occurrence;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;

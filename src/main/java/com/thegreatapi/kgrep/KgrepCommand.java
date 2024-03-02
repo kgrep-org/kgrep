@@ -7,7 +7,7 @@ import io.quarkus.picocli.runtime.annotations.TopCommand;
 import picocli.CommandLine.Command;
 
 @TopCommand
-@Command(name = "kgrep", mixinStandardHelpOptions = true, subcommands = {
+@Command(name = "kgrep", mixinStandardHelpOptions = true, versionProvider = VersionProvider.class, subcommands = {
         LogsCommand.class,
         ConfigMapsCommand.class,
         PodsCommand.class
