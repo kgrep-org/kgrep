@@ -19,12 +19,14 @@ jobs:
       - name: Build with Maven - JDK
         run: mvn -B package -DskipTests -Pnative
       - name: Rename file
-        run: mv /home/runner/work/kgrep/kgrep/target/kgrep-*-runner /home/runner/work/kgrep/kgrep/target/kgrep-linux
+        run: mv /home/runner/work/kgrep/kgrep/target/kgrep-*-runner /home/runner/work/kgrep/kgrep/target/kgrep
+      - name: Compress
+        run: tar -czf /home/runner/work/kgrep/kgrep/target/kgrep-linux.tar.gz /home/runner/work/kgrep/kgrep/target/kgrep
       - name: Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: /home/runner/work/kgrep/kgrep/target/kgrep-linux
+          files: /home/runner/work/kgrep/kgrep/target/kgrep-linux.tar.gz
   publish-macos-binary:
     runs-on: macos-latest
     steps:
@@ -43,9 +45,11 @@ jobs:
       - name: Build with Maven - JDK
         run: mvn -B package -DskipTests -Pnative
       - name: Rename file
-        run: mv /Users/runner/work/kgrep/kgrep/target/kgrep-*-runner /Users/runner/work/kgrep/kgrep/target/kgrep-macos
+        run: mv /Users/runner/work/kgrep/kgrep/target/kgrep-*-runner /Users/runner/work/kgrep/kgrep/target/kgrep
+      - name: Compress
+        run: tar -czf /Users/runner/work/kgrep/kgrep/target/kgrep-macos.tar.gz /Users/runner/work/kgrep/kgrep/target/kgrep
       - name: Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: /Users/runner/work/kgrep/kgrep/target/kgrep-macos
+          files: /Users/runner/work/kgrep/kgrep/target/kgrep
