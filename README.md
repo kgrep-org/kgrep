@@ -13,6 +13,10 @@ This utility is designed to simplify the process of searching and analyzing logs
 
 Type `kgrep --help` to check the commands.
 
+## Install
+
+Download a release from https://github.com/hbelmiro/kgrep/releases, uncompress it, and add it to your PATH.
+
 ## Building the project
 
 This project uses Quarkus, the Supersonic Subatomic Java Framework.
