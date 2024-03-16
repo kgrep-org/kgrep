@@ -17,14 +17,13 @@ jobs:
           distribution: 'temurin'
           cache: maven
       - name: Build with Maven - JDK
-        run: mvn -B package -DskipTests
+        run: mvn -B package -DskipTests -Pnative
       - name: Rename file
-        run: mv /home/runner/work/kgrep/kgrep/target/kgrep-1.0.0-SNAPSHOT.jar /home/runner/work/kgrep/kgrep/target/kgrep-linux
+        run: mv /home/runner/work/kgrep/kgrep/target/kgrep-*-runner /home/runner/work/kgrep/kgrep/target/kgrep-linux
       - name: Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          #name: '${{ github.ref_name }}'
           files: /home/runner/work/kgrep/kgrep/target/kgrep-linux
   publish-macos-binary:
     runs-on: macos-latest
@@ -37,12 +36,11 @@ jobs:
           distribution: 'temurin'
           cache: maven
       - name: Build with Maven - JDK
-        run: mvn -B package -DskipTests
+        run: mvn -B package -DskipTests -Pnative
       - name: Rename file
-        run: mv /Users/runner/work/kgrep/kgrep/target/kgrep-1.0.0-SNAPSHOT.jar /Users/runner/work/kgrep/kgrep/target/kgrep-macos
+        run: mv /Users/runner/work/kgrep/kgrep/target/kgrep-*-runner /Users/runner/work/kgrep/kgrep/target/kgrep-macos
       - name: Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          #name: '${{ github.ref_name }}-macos'
           files: /Users/runner/work/kgrep/kgrep/target/kgrep-macos
