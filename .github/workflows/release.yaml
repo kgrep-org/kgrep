@@ -52,4 +52,4 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: /Users/runner/work/kgrep/kgrep/target/kgrep
+          files: /Users/runner/work/kgrep/kgrep/target/kgrep-macos.tar.gz
