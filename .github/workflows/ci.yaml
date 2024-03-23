@@ -38,6 +38,7 @@ jobs:
         run: mvn -B package -Pnative
 
   dependabot:
+    permissions: write-all
     name: 'Dependabot'
     needs: [ build-native ]
     runs-on: ubuntu-latest
