@@ -36,3 +36,15 @@ jobs:
           cache: maven
       - name: Build with Maven - Native
         run: mvn -B package -Pnative
+
+  dependabot:
+    name: 'Dependabot'
+    needs: [ build-native ]
+    runs-on: ubuntu-latest
+    if: ${{ github.actor == 'dependabot[bot]' && github.event_name == 'pull_request'}}
+    steps:
+      - name: Enable auto-merge for Dependabot PRs
+        run: gh pr merge --auto --merge "$PR_URL"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
