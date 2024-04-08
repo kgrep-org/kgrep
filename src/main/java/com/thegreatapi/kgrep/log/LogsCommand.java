@@ -24,6 +24,9 @@ public final class LogsCommand implements Runnable {
     @CommandLine.Option(names = {"-p", "--pattern"}, description = "grep search pattern", required = true)
     private String pattern;
 
+    @CommandLine.Option(names = {"-s", "--sort-by"}, description = "sort by", defaultValue = "POD_AND_CONTAINER")
+    private SortBy sortBy;
+
     private final LogGrepper logGrepper;
 
     @SuppressWarnings("unused")
@@ -34,7 +37,7 @@ public final class LogsCommand implements Runnable {
 
     @Override
     public void run() {
-        logGrepper.grep(namespace, resource, pattern)
+        logGrepper.grep(namespace, resource, pattern, sortBy)
                 .forEach(LogsCommand::print);
     }
 

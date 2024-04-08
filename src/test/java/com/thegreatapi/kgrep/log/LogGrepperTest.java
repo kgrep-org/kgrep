@@ -14,6 +14,7 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.kubernetes.client.WithKubernetesTestServer;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,14 +36,29 @@ class LogGrepperTest {
     @TestMode
     FakeLogReader fakeLogReader;
 
+    @BeforeEach
+    void setUp() {
+        if (!PodsCreatedFlag.getInstance().isPodsCreated()) {
+            createPods();
+            PodsCreatedFlag.getInstance().setPodsCreated();
+        }
+    }
+
     @Test
     void testInteractionWithAPIServer() {
-        createPods();
-
-        assertThat(logGrepper.grep(NAMESPACE, "pod", "initialized")).containsExactlyInAnyOrder(
+        assertThat(logGrepper.grep(NAMESPACE, "pod", "initialized")).containsExactly(
                 new LogMessage("pod1", "container1", "xpto initialized", 2),
                 new LogMessage("pod2", "container2", "foo initialized", 2),
-                new LogMessage("pod2", "container2", "bar initialized",5)
+                new LogMessage("pod2", "container2", "bar initialized", 5)
+        );
+    }
+
+    @Test
+    void testSortByMessage() {
+        assertThat(logGrepper.grep(NAMESPACE, "pod", "initialized", SortBy.MESSAGE)).containsExactly(
+                new LogMessage("pod2", "container2", "bar initialized", 5),
+                new LogMessage("pod2", "container2", "foo initialized", 2),
+                new LogMessage("pod1", "container1", "xpto initialized", 2)
         );
     }
 
@@ -87,5 +103,26 @@ class LogGrepperTest {
                 .and()
                 .withStatus(status)
                 .build();
+    }
+
+    private static class PodsCreatedFlag {
+        private static final PodsCreatedFlag INSTANCE = new PodsCreatedFlag();
+
+        private boolean podsCreated = false;
+
+        private PodsCreatedFlag() {
+        }
+
+        static PodsCreatedFlag getInstance() {
+            return INSTANCE;
+        }
+
+        void setPodsCreated() {
+            podsCreated = true;
+        }
+
+        boolean isPodsCreated() {
+            return podsCreated;
+        }
     }
 }
