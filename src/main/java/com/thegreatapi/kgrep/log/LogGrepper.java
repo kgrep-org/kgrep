@@ -31,11 +31,15 @@ public final class LogGrepper {
     List<LogMessage> grep(String namespace, String resource, String pattern) {
         List<LogMessage> lines = new ArrayList<>();
 
-        kubernetesClient.pods().list().getItems().stream()
-                .filter(pod -> pod.getMetadata().getName().contains(resource))
-                .forEach(pod -> pod.getStatus().getContainerStatuses().stream()
-                        .filter(status -> status.getState().getTerminated() == null)
-                        .forEach(container -> lines.addAll(readLog(namespace, pod, container, pattern))));
+        for (Pod pod : kubernetesClient.pods().inNamespace(namespace).list().getItems()) {
+            if (pod.getMetadata().getName().contains(resource)) {
+                for (ContainerStatus status : pod.getStatus().getContainerStatuses()) {
+                    if (status.getState().getTerminated() == null) {
+                        lines.addAll(readLog(namespace, pod, status, pattern));
+                    }
+                }
+            }
+        }
 
         return Collections.unmodifiableList(lines);
     }
