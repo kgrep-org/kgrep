@@ -25,13 +25,8 @@ public abstract class AbstractResourceCommand implements Runnable {
 
     @Override
     public void run() {
-        try {
-            List<ResourceLine> occurrences = resourceGrepper.grep(namespace, pattern);
-            occurrences.forEach(AbstractResourceCommand::print);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
-        }
+        List<ResourceLine> occurrences = resourceGrepper.grep(namespace, pattern);
+        occurrences.forEach(AbstractResourceCommand::print);
     }
 
     private static void print(ResourceLine resourceLine) {

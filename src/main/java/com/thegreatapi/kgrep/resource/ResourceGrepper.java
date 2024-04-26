@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 public abstract class ResourceGrepper<T extends HasMetadata, L extends KubernetesResourceList<T>, R extends Resource<T>> {
 
@@ -38,42 +37,36 @@ public abstract class ResourceGrepper<T extends HasMetadata, L extends Kubernete
 
     public abstract MixedOperation<T, L, R> getResources();
 
-    public List<ResourceLine> grep(String namespace, String pattern) throws InterruptedException {
-        List<T> configMaps = getResources().inNamespace(namespace).list().getItems();
+    public List<ResourceLine> grep(String namespace, String pattern) {
+        List<T> resources = getResources().inNamespace(namespace).list().getItems();
 
         List<ResourceLine> occurrences = new ArrayList<>();
 
         try (ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor()) {
-            for (T configMap : configMaps) {
+            for (T resource : resources) {
                 executorService.submit(() -> {
-                    String[] lines = getYaml(configMap).split(System.lineSeparator());
+                    String[] lines = getYaml(resource).split(System.lineSeparator());
 
                     grep.run(lines, pattern).stream()
-                            .map(occurrence -> createResourceLine(configMap, occurrence))
+                            .map(occurrence -> createResourceLine(resource, occurrence))
                             .forEach(occurrences::add);
                 });
-            }
-
-            executorService.shutdown();
-
-            if (!executorService.awaitTermination(1, TimeUnit.MINUTES)) {
-                throw new RuntimeException("Timeout!!");
             }
         }
 
         return occurrences;
     }
 
-    private String getYaml(T configMap) {
+    private String getYaml(T resource) {
         try {
-            return mapper.writeValueAsString(configMap);
+            return mapper.writeValueAsString(resource);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Error while getting " + configMap.getMetadata().getName() + " as YAML.", e);
+            throw new RuntimeException("Error while getting " + resource.getMetadata().getName() + " as YAML.", e);
         }
     }
 
-    private ResourceLine createResourceLine(T configMap, Occurrence occurrence) {
-        return new ResourceLine(configMap.getFullResourceName() + "/" + configMap.getMetadata().getName(),
+    private ResourceLine createResourceLine(T resource, Occurrence occurrence) {
+        return new ResourceLine(resource.getFullResourceName() + "/" + resource.getMetadata().getName(),
                 occurrence.lineNumber(), occurrence.text());
     }
 }

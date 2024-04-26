@@ -1,6 +1,5 @@
 package com.thegreatapi.kgrep.pod;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.thegreatapi.kgrep.KubernetesTestsUtil;
 import com.thegreatapi.kgrep.resource.ResourceLine;
 import io.fabric8.kubernetes.api.model.Pod;
@@ -28,7 +27,7 @@ class PodGrepperTest {
     PodGrepper podGrepper;
 
     @Test
-    void grep() throws JsonProcessingException, InterruptedException {
+    void grep() {
         createPods();
 
         List<ResourceLine> occurrences = podGrepper.grep(NAMESPACE, "kubeflow");

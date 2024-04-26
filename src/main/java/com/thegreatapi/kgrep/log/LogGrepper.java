@@ -42,9 +42,7 @@ public final class LogGrepper {
         for (Pod pod : kubernetesClient.pods().inNamespace(namespace).list().getItems()) {
             if (pod.getMetadata().getName().contains(resource)) {
                 for (ContainerStatus status : pod.getStatus().getContainerStatuses()) {
-                    if (status.getState().getTerminated() == null) {
-                        lines.addAll(readLog(namespace, pod, status, pattern));
-                    }
+                    lines.addAll(readLog(namespace, pod, status, pattern));
                 }
             }
         }
