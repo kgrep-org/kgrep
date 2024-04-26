@@ -1,6 +1,5 @@
 package com.thegreatapi.kgrep.configmap;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thegreatapi.kgrep.KubernetesTestsUtil;
 import com.thegreatapi.kgrep.grep.Grep;
@@ -33,7 +32,7 @@ class ConfigMapGrepperTest {
     Grep grep;
 
     @Test
-    void grep() throws JsonProcessingException, InterruptedException {
+    void grep() {
         createConfigMaps();
 
         var configMapGrepper = new ConfigMapGrepper(client, mapper, grep);
