@@ -10,9 +10,7 @@ import jakarta.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 
 import static java.util.Comparator.comparing;
 
@@ -42,18 +40,22 @@ public final class LogGrepper {
         for (Pod pod : kubernetesClient.pods().inNamespace(namespace).list().getItems()) {
             if (pod.getMetadata().getName().contains(resource)) {
                 for (ContainerStatus status : pod.getStatus().getContainerStatuses()) {
-                    lines.addAll(readLog(namespace, pod, status, pattern));
+                    if (status.getState().getWaiting() == null) {
+                        lines.addAll(readLog(namespace, pod, status, pattern));
+                    }
                 }
             }
         }
 
-        if (sortBy == SortBy.POD_AND_CONTAINER) {
-            return Collections.unmodifiableList(lines);
-        } else if (sortBy == SortBy.MESSAGE) {
-            lines.sort(comparing(LogMessage::message));
-            return Collections.unmodifiableList(lines);
-        } else {
-            throw new UnsupportedOperationException("Sorting by " + sortBy + " is not supported");
+        switch (sortBy) {
+            case POD_AND_CONTAINER -> {
+                return Collections.unmodifiableList(lines);
+            }
+            case MESSAGE -> {
+                lines.sort(comparing(LogMessage::message));
+                return Collections.unmodifiableList(lines);
+            }
+            case null, default -> throw new UnsupportedOperationException("Sorting by " + sortBy + " is not supported");
         }
     }
 
