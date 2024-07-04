@@ -20,7 +20,7 @@ jobs:
           distribution: 'temurin'
           cache: maven
       - name: Build with Maven - JDK
-        run: mvn -B package
+        run: mvn clean -B package
 
   build-native:
 
@@ -35,7 +35,7 @@ jobs:
           distribution: 'temurin'
           cache: maven
       - name: Build with Maven - Native
-        run: mvn -B package -Pnative
+        run: mvn clean -B package -Pnative
 
   dependabot:
     permissions: write-all
