@@ -17,7 +17,7 @@ jobs:
           distribution: 'temurin'
           cache: maven
       - name: Build with Maven - JDK
-        run: mvn -B package -DskipTests -Pnative
+        run: mvn -B package -DskipTests -Pnative -Dquarkus.native.container-build=true -Dquarkus.native.builder-image=quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-22
       - name: Rename file
         run: mv /home/runner/work/kgrep/kgrep/target/kgrep-*-runner /home/runner/work/kgrep/kgrep/target/kgrep
       - name: Compress
@@ -43,7 +43,7 @@ jobs:
           distribution: 'temurin'
           cache: maven
       - name: Build with Maven - JDK
-        run: mvn -B package -DskipTests -Pnative
+        run: mvn -B package -DskipTests -Pnative -Dquarkus.native.container-build=true -Dquarkus.native.builder-image=quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-22
       - name: Rename file
         run: mv /Users/runner/work/kgrep/kgrep/target/kgrep-*-runner /Users/runner/work/kgrep/kgrep/target/kgrep
       - name: Compress

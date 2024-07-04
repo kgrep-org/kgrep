@@ -35,7 +35,7 @@ jobs:
           distribution: 'temurin'
           cache: maven
       - name: Build with Maven - Native
-        run: mvn clean -B package -Pnative
+        run: mvn clean -B package -Pnative -Dquarkus.native.container-build=true -Dquarkus.native.builder-image=quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-22
 
   dependabot:
     permissions: write-all
