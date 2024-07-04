@@ -10,9 +10,10 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
-import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 @WithKubernetesTestServer
 @QuarkusTest
@@ -30,9 +31,10 @@ class PodGrepperTest {
     void grep() {
         createPods();
 
-        List<ResourceLine> occurrences = podGrepper.grep(NAMESPACE, "kubeflow");
+        await().atMost(20, TimeUnit.SECONDS)
+                .until(() -> podGrepper.grep(NAMESPACE, "kubeflow").size() == 9);
 
-        assertThat(occurrences)
+        assertThat(podGrepper.grep(NAMESPACE, "kubeflow"))
                 .containsExactlyInAnyOrder(
                         new ResourceLine("pods/ds-pipeline-sample-7b59bd7cb4-szxqb", 20, "  namespace: \"kubeflow\""),
                         new ResourceLine("pods/mariadb-sample-5bd78c456f-kffct", 20, "  namespace: \"kubeflow\""),
