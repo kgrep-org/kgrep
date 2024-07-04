@@ -13,8 +13,10 @@ import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 @WithKubernetesTestServer
 @QuarkusTest
@@ -38,6 +40,9 @@ class ConfigMapGrepperTest {
         var configMapGrepper = new ConfigMapGrepper(client, mapper, grep);
 
         List<ResourceLine> occurrences = configMapGrepper.grep(NAMESPACE, "kubeflow");
+
+        await().atMost(20, TimeUnit.SECONDS)
+                .until(() -> configMapGrepper.grep(NAMESPACE, "kubeflow").size() == 5);
 
         assertThat(occurrences)
                 .containsExactlyInAnyOrder(
