@@ -11,11 +11,14 @@ import jakarta.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 
 import static java.util.Comparator.comparing;
 
 @ApplicationScoped
 public final class LogGrepper {
+
+    private static final Predicate<Pod> ALL_PODS = _ -> true;
 
     private final KubernetesClient kubernetesClient;
 
@@ -30,15 +33,27 @@ public final class LogGrepper {
         this.grep = grep;
     }
 
+    List<LogMessage> grep(String namespace, String pattern) {
+        return grep(namespace, pattern, SortBy.POD_AND_CONTAINER);
+    }
+
     List<LogMessage> grep(String namespace, String resource, String pattern) {
         return grep(namespace, resource, pattern, SortBy.POD_AND_CONTAINER);
     }
 
+    List<LogMessage> grep(String namespace, String pattern, SortBy sortBy) {
+        return grep(namespace, pattern, sortBy, ALL_PODS);
+    }
+
     List<LogMessage> grep(String namespace, String resource, String pattern, SortBy sortBy) {
+        return grep(namespace, pattern, sortBy, pod -> pod.getMetadata().getName().contains(resource));
+    }
+
+    private List<LogMessage> grep(String namespace, String pattern, SortBy sortBy, Predicate<Pod> podFilter) {
         List<LogMessage> lines = new ArrayList<>();
 
         for (Pod pod : kubernetesClient.pods().inNamespace(namespace).list().getItems()) {
-            if (pod.getMetadata().getName().contains(resource)) {
+            if (podFilter.test(pod)) {
                 for (ContainerStatus status : pod.getStatus().getContainerStatuses()) {
                     if (status.getState().getWaiting() == null) {
                         lines.addAll(readLog(namespace, pod, status, pattern));

@@ -5,6 +5,7 @@ import jakarta.inject.Inject;
 import picocli.CommandLine;
 
 import java.text.MessageFormat;
+import java.util.Optional;
 
 @CommandLine.Command(name = "logs", mixinStandardHelpOptions = true, versionProvider = VersionProvider.class)
 public final class LogsCommand implements Runnable {
@@ -18,8 +19,8 @@ public final class LogsCommand implements Runnable {
     @CommandLine.Option(names = {"-n", "--namespace"}, description = "The Kubernetes namespace", required = true)
     private String namespace;
 
-    @CommandLine.Option(names = {"-r", "--resource-name"}, description = "Resource", required = true)
-    private String resource;
+    @CommandLine.Option(names = {"-r", "--resource-name"}, description = "Resource")
+    private Optional<String> resource;
 
     @CommandLine.Option(names = {"-p", "--pattern"}, description = "grep search pattern", required = true)
     private String pattern;
@@ -37,8 +38,13 @@ public final class LogsCommand implements Runnable {
 
     @Override
     public void run() {
-        logGrepper.grep(namespace, resource, pattern, sortBy)
-                .forEach(LogsCommand::print);
+        if (resource.isPresent()) {
+            logGrepper.grep(namespace, resource.orElseThrow(), pattern, sortBy)
+                    .forEach(LogsCommand::print);
+        } else {
+            logGrepper.grep(namespace, pattern, sortBy)
+                    .forEach(LogsCommand::print);
+        }
     }
 
     private static void print(LogMessage logMessage) {
