@@ -54,6 +54,17 @@ class LogGrepperTest {
     }
 
     @Test
+    void testInteractionWithAPIServerAllPods() {
+        assertThat(logGrepper.grep(NAMESPACE, "initialized")).containsExactly(
+                new LogMessage("pod1", "container1", "xpto initialized", 2),
+                new LogMessage("pod2", "container2", "foo initialized", 2),
+                new LogMessage("pod2", "container2", "bar initialized", 5),
+                new LogMessage("p3", "c3", "foo initialized", 2),
+                new LogMessage("p3", "c3", "bar initialized", 5)
+        );
+    }
+
+    @Test
     void testSortByMessage() {
         assertThat(logGrepper.grep(NAMESPACE, "pod", "initialized", SortBy.MESSAGE)).containsExactly(
                 new LogMessage("pod2", "container2", "bar initialized", 5),
@@ -65,6 +76,7 @@ class LogGrepperTest {
     private void createPods() {
         client.pods().resource(createPod("container1", "pod1")).create();
         client.pods().resource(createPod("container2", "pod2")).create();
+        client.pods().resource(createPod("c3", "p3")).create();
 
 
         fakeLogReader.addLog(new RegistryKey(NAMESPACE, "pod1", "container1"),
@@ -75,6 +87,16 @@ class LogGrepperTest {
                         """);
 
         fakeLogReader.addLog(new RegistryKey(NAMESPACE, "pod2", "container2"),
+                """
+                        Initializing foo
+                        foo initialized
+                        error writing to foo
+                        Initializing bar
+                        bar initialized
+                        error writing to bar
+                        """);
+
+        fakeLogReader.addLog(new RegistryKey(NAMESPACE, "p3", "c3"),
                 """
                         Initializing foo
                         foo initialized
