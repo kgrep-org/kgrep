@@ -44,7 +44,7 @@ public abstract class ResourceGrepper<T extends HasMetadata, L extends Kubernete
 
         try (ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor()) {
             for (T resource : resources) {
-                executorService.submit(() -> {
+                executorService.execute(() -> {
                     String[] lines = getYaml(resource).split(System.lineSeparator());
 
                     grep.run(lines, pattern).stream()
