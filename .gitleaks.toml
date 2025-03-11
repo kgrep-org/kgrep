@@ -1,0 +1,9 @@
+# https://toml.io/en/v1.0.0
+[allowlist]
+  description = "Global Allowlist"
+
+  # Ignore based on any subset of the file path
+  paths = [
+    # Ignore all files under src/test/resources
+    '''\/src\/test\/resources\/.*''',
+  ]
