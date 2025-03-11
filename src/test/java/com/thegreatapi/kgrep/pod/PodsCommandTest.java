@@ -17,24 +17,28 @@ import static org.awaitility.Awaitility.await;
 
 @WithKubernetesTestServer
 @QuarkusTest
-class PodGrepperTest {
+class PodsCommandTest {
 
     private static final String NAMESPACE = "kubeflow";
 
-    @Inject
-    KubernetesClient client;
+    private final KubernetesClient client;
+
+    private final PodsCommand command;
 
     @Inject
-    PodGrepper podGrepper;
+    PodsCommandTest(PodGrepper grepper, PodRetriever retriever, KubernetesClient client) {
+        this.command = new PodsCommand(retriever, grepper);
+        this.client = client;
+    }
 
     @Test
     void grep() {
         createPods();
 
         await().atMost(20, TimeUnit.SECONDS)
-                .until(() -> podGrepper.grep(NAMESPACE, "kubeflow").size() == 9);
+                .until(() -> command.getOccurrences(NAMESPACE, "kubeflow").size() == 9);
 
-        assertThat(podGrepper.grep(NAMESPACE, "kubeflow"))
+        assertThat(command.getOccurrences(NAMESPACE, "kubeflow"))
                 .containsExactlyInAnyOrder(
                         new ResourceLine("pods/ds-pipeline-sample-7b59bd7cb4-szxqb", 20, "  namespace: \"kubeflow\""),
                         new ResourceLine("pods/mariadb-sample-5bd78c456f-kffct", 20, "  namespace: \"kubeflow\""),

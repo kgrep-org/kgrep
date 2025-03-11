@@ -17,24 +17,28 @@ import static org.awaitility.Awaitility.await;
 
 @WithKubernetesTestServer
 @QuarkusTest
-class ServiceAccountGrepperTest {
+class ServiceAccountsCommandTest {
 
     private static final String NAMESPACE = "kubeflow";
 
-    @Inject
-    KubernetesClient client;
+    private final KubernetesClient client;
+
+    private final ServiceAccountsCommand command;
 
     @Inject
-    ServiceAccountGrepper serviceAccountGrepper;
+    ServiceAccountsCommandTest(KubernetesClient client, ServiceAccountRetriever retriever, ServiceAccountGrepper grepper) {
+        this.client = client;
+        this.command = new ServiceAccountsCommand(retriever, grepper);
+    }
 
     @Test
     void grep() {
         createServiceAccount();
 
         await().atMost(20, TimeUnit.SECONDS)
-                .until(() -> serviceAccountGrepper.grep(NAMESPACE, "kubeflow").size() == 3);
+                .until(() -> command.getOccurrences(NAMESPACE, "kubeflow").size() == 3);
 
-        assertThat(serviceAccountGrepper.grep(NAMESPACE, "kubeflow"))
+        assertThat(command.getOccurrences(NAMESPACE, "kubeflow"))
                 .containsExactlyInAnyOrder(
                         new ResourceLine("serviceaccounts/pipeline-runner", 8, "      :\\\"kubeflow-pipelines\\\"},\\\"name\\\":\\\"pipeline-runner\\\",\\\"namespace\\\":\\\"kubeflow\\\"\\"),
                         new ResourceLine("serviceaccounts/pipeline-runner", 13, "    application-crd-id: \"kubeflow-pipelines\""),

@@ -1,8 +1,6 @@
 package com.thegreatapi.kgrep.configmap;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thegreatapi.kgrep.KubernetesTestsUtil;
-import com.thegreatapi.kgrep.grep.Grep;
 import com.thegreatapi.kgrep.resource.ResourceLine;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -20,29 +18,28 @@ import static org.awaitility.Awaitility.await;
 
 @WithKubernetesTestServer
 @QuarkusTest
-class ConfigMapGrepperTest {
+class ConfigMapsCommandTest {
 
     private static final String NAMESPACE = "kubeflow";
 
-    @Inject
-    KubernetesClient client;
+    private final KubernetesClient client;
+
+    private final ConfigMapsCommand command;
 
     @Inject
-    ObjectMapper mapper;
-
-    @Inject
-    Grep grep;
+    ConfigMapsCommandTest(KubernetesClient client, ConfigMapGrepper grepper, ConfigMapRetriever retriever) {
+        this.command = new ConfigMapsCommand(retriever, grepper);
+        this.client = client;
+    }
 
     @Test
     void grep() {
         createConfigMaps();
 
-        var configMapGrepper = new ConfigMapGrepper(client, mapper, grep);
-
-        List<ResourceLine> occurrences = configMapGrepper.grep(NAMESPACE, "kubeflow");
+        List<ResourceLine> occurrences = command.getOccurrences(NAMESPACE, "kubeflow");
 
         await().atMost(20, TimeUnit.SECONDS)
-                .until(() -> configMapGrepper.grep(NAMESPACE, "kubeflow").size() == 5);
+                .until(() -> command.getOccurrences(NAMESPACE, "kubeflow").size() == 5);
 
         assertThat(occurrences)
                 .containsExactlyInAnyOrder(
