@@ -3,6 +3,7 @@ package com.thegreatapi.kgrep;
 import com.thegreatapi.kgrep.configmap.ConfigMapsCommand;
 import com.thegreatapi.kgrep.log.LogsCommand;
 import com.thegreatapi.kgrep.pod.PodsCommand;
+import com.thegreatapi.kgrep.secret.SecretsCommand;
 import com.thegreatapi.kgrep.serviceaccount.ServiceAccountsCommand;
 import io.quarkus.picocli.runtime.annotations.TopCommand;
 import picocli.CommandLine.Command;
@@ -12,7 +13,8 @@ import picocli.CommandLine.Command;
         LogsCommand.class,
         ConfigMapsCommand.class,
         PodsCommand.class,
-        ServiceAccountsCommand.class
+        ServiceAccountsCommand.class,
+        SecretsCommand.class
 })
 class KgrepCommand {
 }
