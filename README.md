@@ -4,6 +4,22 @@
 
 This utility is designed to simplify the process of searching and analyzing logs and resources in Kubernetes.
 
+##### How does it differ from printing the resource definition and grepping it?
+
+`kgrep` allows you to search in multiples logs or resources at the same time.
+
+```shell
+$ kgrep configmaps -n my_namespace -p "example"
+configmaps/example-config-4khgb5fg64[7]:     internal.config.kubernetes.io/previousNames: "example-config-4khgb5fg64"
+configmaps/example-config-4khgb5fg64[48]:   name: "example-config-4khgb5fg64"
+configmaps/example-config-5fmk4f7h8k[7]:     internal.config.kubernetes.io/previousNames: "example-config-5fmk4f7h8k"
+configmaps/example-config-5fmk4f7h8k[57]:   name: "example-config-5fmk4f7h8k"
+configmaps/acme-manager-config[104]:     \  frameworks:\n  - \"batch/job\"\n  - \"example.org/mpijob\"\n  - \"acme.io/acmejob\"\
+configmaps/acme-manager-config[105]:     \n  - \"acme.io/acmecluster\"\n  - \"jobset.x-k8s.io/jobset\"\n  - \"example.org/mxjob\"\
+configmaps/acme-manager-config[106]:     \n  - \"example.org/paddlejob\"\n  - \"example.org/acmejob\"\n  - \"example.org/tfjob\"\
+configmaps/acme-manager-config[107]:     \n  - \"example.org/xgboostjob\"\n# - \"pod\"\n  externalFrameworks:\n
+```
+
 #### Prerequisites
 
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed and configured to connect to your
