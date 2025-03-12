@@ -17,26 +17,30 @@ import static org.awaitility.Awaitility.await;
 
 @WithKubernetesTestServer
 @QuarkusTest
-class SecretGrepperTest {
+class SecretsCommandTest {
 
     private static final String NAMESPACE = "hbelmiro";
 
     private static final String PATTERN = "hbelmiro";
 
-    @Inject
-    KubernetesClient client;
+    private final KubernetesClient client;
+
+    private final SecretsCommand command;
 
     @Inject
-    SecretGrepper grepper;
+    SecretsCommandTest(KubernetesClient client, SecretGrepper grepper, SecretRetriever retriever) {
+        this.command = new SecretsCommand(retriever, grepper);
+        this.client = client;
+    }
 
     @Test
     void grep() {
         createSecret();
 
         await().atMost(20, TimeUnit.SECONDS)
-                .until(() -> grepper.grep(NAMESPACE, PATTERN).size() == 2);
+                .until(() -> command.getOccurrences(NAMESPACE, PATTERN).size() == 2);
 
-        assertThat(grepper.grep(NAMESPACE, PATTERN))
+        assertThat(command.getOccurrences(NAMESPACE, PATTERN))
                 .containsExactlyInAnyOrder(
                         new ResourceLine("secrets/ds-pipeline-db-dspa", 9, "      :\\\"v2\\\"},\\\"name\\\":\\\"ds-pipeline-db-dspa\\\",\\\"namespace\\\":\\\"hbelmiro\\\",\\\"ownerReferences\\\"\\"),
                         new ResourceLine("secrets/ds-pipeline-db-dspa", 21, "  namespace: \"hbelmiro\"")

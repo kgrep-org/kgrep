@@ -1,11 +1,12 @@
 package com.thegreatapi.kgrep.resource;
 
+import io.fabric8.kubernetes.api.model.HasMetadata;
 import picocli.CommandLine;
 
 import java.text.MessageFormat;
 import java.util.List;
 
-public abstract class AbstractResourceCommand implements Runnable {
+public abstract class AbstractResourceCommand<T extends HasMetadata> implements Runnable {
 
     private static final String ANSI_RESET = "\u001B[0m";
 
@@ -17,16 +18,23 @@ public abstract class AbstractResourceCommand implements Runnable {
     @CommandLine.Option(names = {"-p", "--pattern"}, description = "grep search pattern", required = true)
     protected String pattern;
 
-    private final ResourceGrepper<?, ?, ?> resourceGrepper;
+    private final ResourceRetriever<T> resourceRetriever;
 
-    protected AbstractResourceCommand(ResourceGrepper<?, ?, ?> resourceGrepper) {
+    private final AbstractResourceGrepper<T> resourceGrepper;
+
+    protected AbstractResourceCommand(ResourceRetriever<T> resourceRetriever, AbstractResourceGrepper<T> resourceGrepper) {
+        this.resourceRetriever = resourceRetriever;
         this.resourceGrepper = resourceGrepper;
     }
 
     @Override
     public void run() {
-        List<ResourceLine> occurrences = resourceGrepper.grep(namespace, pattern);
-        occurrences.forEach(AbstractResourceCommand::print);
+        getOccurrences(this.namespace, this.pattern).forEach(AbstractResourceCommand::print);
+    }
+
+    public List<ResourceLine> getOccurrences(String namespace, String pattern) {
+        List<T> resources = this.resourceRetriever.getResources(namespace);
+        return this.resourceGrepper.grep(resources, pattern);
     }
 
     private static void print(ResourceLine resourceLine) {
