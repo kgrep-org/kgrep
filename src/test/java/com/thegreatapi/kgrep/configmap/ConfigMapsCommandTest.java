@@ -1,6 +1,8 @@
 package com.thegreatapi.kgrep.configmap;
 
 import com.thegreatapi.kgrep.KubernetesTestsUtil;
+import com.thegreatapi.kgrep.resource.GenericResourceGrepper;
+import com.thegreatapi.kgrep.resource.GenericResourceRetriever;
 import com.thegreatapi.kgrep.resource.ResourceLine;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -22,12 +24,14 @@ class ConfigMapsCommandTest {
 
     private static final String NAMESPACE = "kubeflow";
 
+    private static final String KIND = "ConfigMap";
+
     private final KubernetesClient client;
 
     private final ConfigMapsCommand command;
 
     @Inject
-    ConfigMapsCommandTest(KubernetesClient client, ConfigMapGrepper grepper, ConfigMapRetriever retriever) {
+    ConfigMapsCommandTest(KubernetesClient client, GenericResourceGrepper grepper, GenericResourceRetriever retriever) {
         this.command = new ConfigMapsCommand(retriever, grepper);
         this.client = client;
     }
@@ -36,18 +40,18 @@ class ConfigMapsCommandTest {
     void grep() {
         createConfigMaps();
 
-        List<ResourceLine> occurrences = command.getOccurrences(NAMESPACE, "kubeflow");
+        List<ResourceLine> occurrences = command.getOccurrences(KIND, NAMESPACE, "kubeflow");
 
         await().atMost(20, TimeUnit.SECONDS)
-                .until(() -> command.getOccurrences(NAMESPACE, "kubeflow").size() == 5);
+                .until(() -> command.getOccurrences(KIND, NAMESPACE, "kubeflow").size() == 5);
 
         assertThat(occurrences)
                 .containsExactlyInAnyOrder(
-                        new ResourceLine("configmaps/custom-ui-configmap", 8, "  namespace: \"kubeflow\""),
-                        new ResourceLine("configmaps/kfp-launcher", 8, "      \\ http://minio-sample.kubeflow.svc.cluster.local:9000\\\\n  region: minio\\\\n \\"),
-                        new ResourceLine("configmaps/kfp-launcher", 12, "      :\\\"data-science-pipelines\\\"},\\\"name\\\":\\\"kfp-launcher\\\",\\\"namespace\\\":\\\"kubeflow\\\"\\"),
-                        new ResourceLine("configmaps/kfp-launcher", 23, "  namespace: \"kubeflow\""),
-                        new ResourceLine("configmaps/kfp-launcher", 35, "  providers: \"s3:\\n  endpoint: http://minio-sample.kubeflow.svc.cluster.local:9000\\n\\")
+                        new ResourceLine(KIND + "/custom-ui-configmap", 8, "  namespace: \"kubeflow\""),
+                        new ResourceLine(KIND + "/kfp-launcher", 8, "      \\ http://minio-sample.kubeflow.svc.cluster.local:9000\\\\n  region: minio\\\\n \\"),
+                        new ResourceLine(KIND + "/kfp-launcher", 12, "      :\\\"data-science-pipelines\\\"},\\\"name\\\":\\\"kfp-launcher\\\",\\\"namespace\\\":\\\"kubeflow\\\"\\"),
+                        new ResourceLine(KIND + "/kfp-launcher", 23, "  namespace: \"kubeflow\""),
+                        new ResourceLine(KIND + "/kfp-launcher", 35, "  providers: \"s3:\\n  endpoint: http://minio-sample.kubeflow.svc.cluster.local:9000\\n\\")
                 );
     }
 

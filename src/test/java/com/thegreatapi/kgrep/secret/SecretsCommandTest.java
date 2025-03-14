@@ -1,6 +1,8 @@
 package com.thegreatapi.kgrep.secret;
 
 import com.thegreatapi.kgrep.KubernetesTestsUtil;
+import com.thegreatapi.kgrep.resource.GenericResourceGrepper;
+import com.thegreatapi.kgrep.resource.GenericResourceRetriever;
 import com.thegreatapi.kgrep.resource.ResourceLine;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -23,12 +25,14 @@ class SecretsCommandTest {
 
     private static final String PATTERN = "hbelmiro";
 
+    private static final String KIND = "Secret";
+
     private final KubernetesClient client;
 
     private final SecretsCommand command;
 
     @Inject
-    SecretsCommandTest(KubernetesClient client, SecretGrepper grepper, SecretRetriever retriever) {
+    SecretsCommandTest(KubernetesClient client, GenericResourceGrepper grepper, GenericResourceRetriever retriever) {
         this.command = new SecretsCommand(retriever, grepper);
         this.client = client;
     }
@@ -38,13 +42,13 @@ class SecretsCommandTest {
         createSecret();
 
         await().atMost(20, TimeUnit.SECONDS)
-                .until(() -> command.getOccurrences(NAMESPACE, PATTERN).size() == 2);
+                .until(() -> command.getOccurrences(KIND, NAMESPACE, PATTERN).size() == 2);
 
-        assertThat(command.getOccurrences(NAMESPACE, PATTERN))
+        assertThat(command.getOccurrences(KIND, NAMESPACE, PATTERN))
                 .containsExactlyInAnyOrder(
-                        new ResourceLine("secrets/ds-pipeline-db-dspa", 9, "      :\\\"v2\\\"},\\\"name\\\":\\\"ds-pipeline-db-dspa\\\",\\\"namespace\\\":\\\"hbelmiro\\\",\\\"ownerReferences\\\"\\"),
-                        new ResourceLine("secrets/ds-pipeline-db-dspa", 21, "  namespace: \"hbelmiro\"")
-                        );
+                        new ResourceLine(KIND + "/ds-pipeline-db-dspa", 9, "      :\\\"v2\\\"},\\\"name\\\":\\\"ds-pipeline-db-dspa\\\",\\\"namespace\\\":\\\"hbelmiro\\\",\\\"ownerReferences\\\"\\"),
+                        new ResourceLine(KIND + "/ds-pipeline-db-dspa", 21, "  namespace: \"hbelmiro\"")
+                );
     }
 
     private void createSecret() {

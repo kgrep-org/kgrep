@@ -1,12 +1,12 @@
 package com.thegreatapi.kgrep.resource;
 
-import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.api.model.GenericKubernetesResource;
 import picocli.CommandLine;
 
 import java.text.MessageFormat;
 import java.util.List;
 
-public abstract class AbstractResourceCommand<T extends HasMetadata> implements Runnable {
+public abstract class AbstractResourceCommand implements Runnable {
 
     private static final String ANSI_RESET = "\u001B[0m";
 
@@ -18,26 +18,28 @@ public abstract class AbstractResourceCommand<T extends HasMetadata> implements 
     @CommandLine.Option(names = {"-p", "--pattern"}, description = "grep search pattern", required = true)
     protected String pattern;
 
-    private final ResourceRetriever<T> resourceRetriever;
+    private GenericResourceRetriever resourceRetriever;
 
-    private final AbstractResourceGrepper<T> resourceGrepper;
+    private GenericResourceGrepper resourceGrepper;
 
-    protected AbstractResourceCommand(ResourceRetriever<T> resourceRetriever, AbstractResourceGrepper<T> resourceGrepper) {
-        this.resourceRetriever = resourceRetriever;
-        this.resourceGrepper = resourceGrepper;
+    private String kind;
+
+    private String apiVersion;
+
+    protected AbstractResourceCommand() {
     }
 
     @Override
     public void run() {
-        getOccurrences(this.namespace, this.pattern).forEach(AbstractResourceCommand::print);
+        getOccurrences(this.kind, this.namespace, this.pattern).forEach(this::print);
     }
 
-    public List<ResourceLine> getOccurrences(String namespace, String pattern) {
-        List<T> resources = this.resourceRetriever.getResources(namespace);
-        return this.resourceGrepper.grep(resources, pattern);
+    public List<ResourceLine> getOccurrences(String kind, String namespace, String pattern) {
+        List<GenericKubernetesResource> resources = this.resourceRetriever.getResources(namespace, apiVersion, kind);
+        return this.resourceGrepper.grep(kind, resources, pattern);
     }
 
-    private static void print(ResourceLine resourceLine) {
+    protected final void print(ResourceLine resourceLine) {
         String output = MessageFormat.format("{0}{1}[{2}]:{3} {4}",
                 BLUE,
                 resourceLine.resourceName(),
@@ -47,5 +49,29 @@ public abstract class AbstractResourceCommand<T extends HasMetadata> implements 
         );
 
         System.out.println(output);
+    }
+
+    protected final GenericResourceGrepper getResourceGrepper() {
+        return resourceGrepper;
+    }
+
+    protected final void setApiVersion(String apiVersion) {
+        this.apiVersion = apiVersion;
+    }
+
+    protected final void setKind(String kind) {
+        this.kind = kind;
+    }
+
+    protected final void setResourceGrepper(GenericResourceGrepper resourceGrepper) {
+        this.resourceGrepper = resourceGrepper;
+    }
+
+    protected final void setResourceRetriever(GenericResourceRetriever resourceRetriever) {
+        this.resourceRetriever = resourceRetriever;
+    }
+
+    protected final GenericResourceRetriever getResourceRetriever() {
+        return resourceRetriever;
     }
 }
