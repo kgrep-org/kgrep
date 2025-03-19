@@ -1,6 +1,8 @@
 package com.thegreatapi.kgrep.serviceaccount;
 
 import com.thegreatapi.kgrep.KubernetesTestsUtil;
+import com.thegreatapi.kgrep.resource.GenericResourceGrepper;
+import com.thegreatapi.kgrep.resource.GenericResourceRetriever;
 import com.thegreatapi.kgrep.resource.ResourceLine;
 import io.fabric8.kubernetes.api.model.ServiceAccount;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -21,12 +23,14 @@ class ServiceAccountsCommandTest {
 
     private static final String NAMESPACE = "kubeflow";
 
+    private static final String KIND = "ServiceAccount";
+
     private final KubernetesClient client;
 
     private final ServiceAccountsCommand command;
 
     @Inject
-    ServiceAccountsCommandTest(KubernetesClient client, ServiceAccountRetriever retriever, ServiceAccountGrepper grepper) {
+    ServiceAccountsCommandTest(KubernetesClient client, GenericResourceRetriever retriever, GenericResourceGrepper grepper) {
         this.client = client;
         this.command = new ServiceAccountsCommand(retriever, grepper);
     }
@@ -36,13 +40,13 @@ class ServiceAccountsCommandTest {
         createServiceAccount();
 
         await().atMost(20, TimeUnit.SECONDS)
-                .until(() -> command.getOccurrences(NAMESPACE, "kubeflow").size() == 3);
+                .until(() -> command.getOccurrences(KIND, NAMESPACE, "kubeflow").size() == 3);
 
-        assertThat(command.getOccurrences(NAMESPACE, "kubeflow"))
+        assertThat(command.getOccurrences(KIND, NAMESPACE, "kubeflow"))
                 .containsExactlyInAnyOrder(
-                        new ResourceLine("serviceaccounts/pipeline-runner", 8, "      :\\\"kubeflow-pipelines\\\"},\\\"name\\\":\\\"pipeline-runner\\\",\\\"namespace\\\":\\\"kubeflow\\\"\\"),
-                        new ResourceLine("serviceaccounts/pipeline-runner", 13, "    application-crd-id: \"kubeflow-pipelines\""),
-                        new ResourceLine("serviceaccounts/pipeline-runner", 15, "  namespace: \"kubeflow\"")
+                        new ResourceLine(KIND + "/pipeline-runner", 8, "      :\\\"kubeflow-pipelines\\\"},\\\"name\\\":\\\"pipeline-runner\\\",\\\"namespace\\\":\\\"kubeflow\\\"\\"),
+                        new ResourceLine(KIND + "/pipeline-runner", 13, "    application-crd-id: \"kubeflow-pipelines\""),
+                        new ResourceLine(KIND + "/pipeline-runner", 15, "  namespace: \"kubeflow\"")
                 );
     }
 
