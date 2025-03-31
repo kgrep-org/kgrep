@@ -12,7 +12,7 @@ public abstract class AbstractResourceCommand implements Runnable {
 
     private static final String BLUE = "\033[0;34m";
 
-    @CommandLine.Option(names = {"-n", "--namespace"}, description = "The Kubernetes namespace", required = true)
+    @CommandLine.Option(names = {"-n", "--namespace"}, description = "The Kubernetes namespace")
     protected String namespace;
 
     @CommandLine.Option(names = {"-p", "--pattern"}, description = "grep search pattern", required = true)
@@ -31,7 +31,16 @@ public abstract class AbstractResourceCommand implements Runnable {
 
     @Override
     public void run() {
-        getOccurrences(this.kind, this.namespace, this.pattern).forEach(this::print);
+        if (this.namespace == null) {
+            getOccurrences(this.kind, this.pattern).forEach(this::print);
+        } else {
+            getOccurrences(this.kind, this.namespace, this.pattern).forEach(this::print);
+        }
+    }
+
+    public List<ResourceLine> getOccurrences(String kind, String pattern) {
+        List<GenericKubernetesResource> resources = this.resourceRetriever.getResources(apiVersion, kind);
+        return this.resourceGrepper.grep(kind, resources, pattern);
     }
 
     public List<ResourceLine> getOccurrences(String kind, String namespace, String pattern) {

@@ -8,6 +8,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.kubernetes.client.KubernetesTestServer;
 import io.quarkus.test.kubernetes.client.WithKubernetesTestServer;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -33,7 +34,7 @@ class ResourcesCommandTest {
     private static KubernetesServer server;
 
     @BeforeEach
-    void setupDiscoveryStub() {
+    void setup() {
         String apiV1Discovery = """
                 {
                     "kind": "APIResourceList",
@@ -46,6 +47,13 @@ class ResourcesCommandTest {
                 """;
 
         server.expect().get().withPath("/api/v1").andReturn(200, apiV1Discovery).always();
+
+        createPods();
+    }
+
+    @AfterEach
+    void tearDown() {
+        deletePods();
     }
 
     @Inject
@@ -56,8 +64,6 @@ class ResourcesCommandTest {
 
     @Test
     void grep() {
-        createPods();
-
         await().atMost(20, TimeUnit.SECONDS)
                 .until(() -> command.getOccurrences(NAMESPACE, "kubeflow", "v1", KIND).size() == 9);
 
@@ -75,9 +81,37 @@ class ResourcesCommandTest {
                 );
     }
 
+    @Test
+    void grepNoNamespace() {
+        client.getConfiguration().setNamespace(NAMESPACE);
+
+        await().atMost(20, TimeUnit.SECONDS)
+                .until(() -> command.getOccurrences("kubeflow", "v1", KIND).size() == 7);
+
+        assertThat(command.getOccurrences("kubeflow", "v1", KIND))
+                .containsExactlyInAnyOrder(
+                        new ResourceLine(KIND + "/ds-pipeline-sample-7b59bd7cb4-szxqb", 34, "      value: \"kubeflow\""),
+                        new ResourceLine(KIND + "/ds-pipeline-sample-7b59bd7cb4-szxqb", 45, "      value: \"mariadb-sample.kubeflow.svc.cluster.local\""),
+                        new ResourceLine(KIND + "/ds-pipeline-sample-7b59bd7cb4-szxqb", 79, "      value: \"minio-sample.kubeflow.svc.cluster.local\""),
+                        new ResourceLine(KIND + "/ds-pipeline-sample-7b59bd7cb4-szxqb", 87, "      value: \"ds-pipeline-sample.kubeflow.svc.cluster.local\""),
+                        new ResourceLine(KIND + "/ds-pipeline-sample-7b59bd7cb4-szxqb", 101, "      value: \"http://minio-sample.kubeflow.svc.cluster.local:9000\""),
+                        new ResourceLine(KIND + "/ds-pipeline-sample-7b59bd7cb4-szxqb", 194, "      kubeflow\\\"}}\""),
+                        new ResourceLine(KIND + "/ds-pipeline-sample-7b59bd7cb4-szxqb", 195, "    - \"--openshift-sar={\\\"namespace\\\":\\\"kubeflow\\\",\\\"resource\\\":\\\"routes\\\",\\\"resourceName\\\"\\")
+                );
+    }
+
     private void createPods() {
         createPod("pod1.yaml");
         createPod("pod2.yaml");
+        createPod("test-namespace-pod1.yaml");
+        createPod("test-namespace-pod2.yaml");
+    }
+
+    private void deletePods() {
+        deletePod("pod1.yaml");
+        deletePod("pod2.yaml");
+        deletePod("test-namespace-pod1.yaml");
+        deletePod("test-namespace-pod2.yaml");
     }
 
     private void createPod(String yamlOrJson) {
@@ -85,5 +119,12 @@ class ResourcesCommandTest {
         Pod pod = client.pods().load(stream).item();
 
         client.pods().resource(pod).create();
+    }
+
+    private void deletePod(String yamlOrJson) {
+        InputStream stream = KubernetesTestsUtil.getResourceAsStream(yamlOrJson);
+        Pod pod = client.pods().load(stream).item();
+
+        client.pods().resource(pod).delete();
     }
 }

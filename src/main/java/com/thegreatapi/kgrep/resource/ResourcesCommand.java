@@ -28,6 +28,12 @@ public final class ResourcesCommand extends AbstractResourceCommand implements R
         getOccurrences(namespace, pattern, apiVersion, kind).forEach(this::print);
     }
 
+    @Override
+    public List<ResourceLine> getOccurrences(String pattern, String apiVersion, String kind) {
+        List<GenericKubernetesResource> resources = getResourceRetriever().getResources(apiVersion, kind);
+        return getResourceGrepper().grep(kind, resources, pattern);
+    }
+
     public List<ResourceLine> getOccurrences(String namespace, String pattern, String apiVersion, String kind) {
         List<GenericKubernetesResource> resources = getResourceRetriever().getResources(namespace, apiVersion, kind);
         return getResourceGrepper().grep(kind, resources, pattern);
