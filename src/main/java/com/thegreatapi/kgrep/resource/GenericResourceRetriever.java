@@ -8,6 +8,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @ApplicationScoped
@@ -20,7 +21,22 @@ public final class GenericResourceRetriever {
         this.client = client;
     }
 
+    public List<GenericKubernetesResource> getResources(String apiVersion, String kind) {
+        Objects.requireNonNull(apiVersion);
+        Objects.requireNonNull(kind);
+
+        String namespace = client.getNamespace();
+        if (namespace == null) {
+            namespace = client.getConfiguration().getNamespace();
+        }
+        return getResources(namespace, apiVersion, kind);
+    }
+
     public List<GenericKubernetesResource> getResources(String namespace, String apiVersion, String kind) {
+        Objects.requireNonNull(namespace);
+        Objects.requireNonNull(apiVersion);
+        Objects.requireNonNull(kind);
+
         APIResourceList resourceList = client.getApiResources(apiVersion);
 
         Optional<APIResource> foundResource = resourceList.getResources().stream()
