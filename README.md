@@ -33,6 +33,25 @@ Type `kgrep --help` to check the commands.
 
 Download a release from https://github.com/hbelmiro/kgrep/releases, uncompress it, and add it to your PATH.
 
+### ⚠️ Unverified app warning in macOS
+
+You can see this warning when trying to run `kgrep` for the first time on macOS.
+
+```
+"kgrep" Not Opened
+Apple could not verify "kgrep" is free of malware that may harm your Mac or compromise your privacy.
+```
+
+![kgrep-not-opened.png](resources/kgrep-not-opened.png)
+
+If you see that, click "Done" and allow `kgrep` to run in macOS settings, like the following screenshot.
+
+![allow-kgrep.png](resources/allow-kgrep.png)
+
+When you try to run it again, you'll see a final warning. Just click "Open Anyway" and it won't warn you anymore.
+
+![open-anyway.png](resources/open-anyway.png)
+
 ## Building the project
 
 This project uses Quarkus, the Supersonic Subatomic Java Framework.
