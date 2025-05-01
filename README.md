@@ -1,39 +1,33 @@
-### kgrep
+# kgrep
 
-#### Overview
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Build Status](https://github.com/hbelmiro/kgrep/actions/workflows/ci.yaml/badge.svg)](https://github.com/hbelmiro/kgrep/actions/workflows/ci.yaml/badge.svg)
+[![Latest Release](https://img.shields.io/github/v/release/hbelmiro/kgrep)](https://github.com/hbelmiro/kgrep/releases)
 
-This utility is designed to simplify the process of searching and analyzing logs and resources in Kubernetes.
+`kgrep` is a command-line utility designed to simplify the process of searching and analyzing logs and resources in Kubernetes. Unlike traditional methods that involve printing resource definitions and grepping through them, `kgrep` allows you to search across multiple logs or resources simultaneously, making it easier to find what you need quickly.
 
-##### How does it differ from printing the resource definition and grepping it?
+## Key Features
 
-`kgrep` allows you to search in multiples logs or resources at the same time.
+* **Resource Searching**: Search the content of Kubernetes resources such as configmaps for specific patterns within designated namespaces.
 
-```shell
-$ kgrep configmaps -n my_namespace -p "example"
-configmaps/example-config-4khgb5fg64[7]:     internal.config.kubernetes.io/previousNames: "example-config-4khgb5fg64"
-configmaps/example-config-4khgb5fg64[48]:   name: "example-config-4khgb5fg64"
-configmaps/example-config-5fmk4f7h8k[7]:     internal.config.kubernetes.io/previousNames: "example-config-5fmk4f7h8k"
-configmaps/example-config-5fmk4f7h8k[57]:   name: "example-config-5fmk4f7h8k"
-configmaps/acme-manager-config[104]:     \  frameworks:\n  - \"batch/job\"\n  - \"example.org/mpijob\"\n  - \"acme.io/acmejob\"\
-configmaps/acme-manager-config[105]:     \n  - \"acme.io/acmecluster\"\n  - \"jobset.x-k8s.io/jobset\"\n  - \"example.org/mxjob\"\
-configmaps/acme-manager-config[106]:     \n  - \"example.org/paddlejob\"\n  - \"example.org/acmejob\"\n  - \"example.org/tfjob\"\
-configmaps/acme-manager-config[107]:     \n  - \"example.org/xgboostjob\"\n# - \"pod\"\n  externalFrameworks:\n
-```
+* **Log Searching**: Inspect logs from a group of pods or entire namespaces, filtering by custom patterns to locate relevant entries.
 
-#### Prerequisites
+* **Namespace Specification**: Every search command supports namespace specification, allowing users to focus their queries on particular sections of their Kubernetes cluster.
+
+* **Pattern-based Filtering**: Utilize pattern matching to refine search results, ensuring that only the most pertinent data is returned.
+
+## Installation
+
+### Prerequisites
 
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed and configured to connect to your
   Kubernetes cluster.
 
-#### Usage
-
-Type `kgrep --help` to check the commands.
-
-## Install
+### Download the binary and add it to your PATH
 
 Download a release from https://github.com/hbelmiro/kgrep/releases, uncompress it, and add it to your PATH.
 
-### ⚠️ Unverified app warning in macOS
+#### ⚠️ Unverified app warning in macOS
 
 You can see this warning when trying to run `kgrep` for the first time on macOS.
 
@@ -51,6 +45,24 @@ If you see that, click "Done" and allow `kgrep` to run in macOS settings, like t
 When you try to run it again, you'll see a final warning. Just click "Open Anyway" and it won't warn you anymore.
 
 ![open-anyway.png](resources/open-anyway.png)
+
+## Example
+
+To search for `example` in `ConfigMaps` definitions in the `my_namespace` namespace: 
+
+```shell
+$ kgrep configmaps -n my_namespace -p "example"
+configmaps/example-config-4khgb5fg64[7]:     internal.config.kubernetes.io/previousNames: "example-config-4khgb5fg64"
+configmaps/example-config-4khgb5fg64[48]:   name: "example-config-4khgb5fg64"
+configmaps/example-config-5fmk4f7h8k[7]:     internal.config.kubernetes.io/previousNames: "example-config-5fmk4f7h8k"
+configmaps/example-config-5fmk4f7h8k[57]:   name: "example-config-5fmk4f7h8k"
+configmaps/acme-manager-config[104]:     \  frameworks:\n  - \"batch/job\"\n  - \"example.org/mpijob\"\n  - \"acme.io/acmejob\"\
+configmaps/acme-manager-config[105]:     \n  - \"acme.io/acmecluster\"\n  - \"jobset.x-k8s.io/jobset\"\n  - \"example.org/mxjob\"\
+configmaps/acme-manager-config[106]:     \n  - \"example.org/paddlejob\"\n  - \"example.org/acmejob\"\n  - \"example.org/tfjob\"\
+configmaps/acme-manager-config[107]:     \n  - \"example.org/xgboostjob\"\n# - \"pod\"\n  externalFrameworks:\n
+```
+
+💡 Type `kgrep --help` to check all the commands.
 
 ## Building the project
 
