@@ -1,7 +1,7 @@
 # kgrep
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Build Status](https://github.com/hbelmiro/kgrep/actions/workflows/ci.yaml/badge.svg)](https://github.com/hbelmiro/kgrep/actions/workflows/ci.yaml/badge.svg)
+[![Build Status](https://github.com/hbelmiro/kgrep/actions/workflows/ci.yaml/badge.svg)](https://github.com/hbelmiro/kgrep/actions/workflows/ci.yaml)
 [![Latest Release](https://img.shields.io/github/v/release/hbelmiro/kgrep)](https://github.com/hbelmiro/kgrep/releases)
 
 `kgrep` is a command-line utility designed to simplify the process of searching and analyzing logs and resources in Kubernetes. Unlike traditional methods that involve printing resource definitions and grepping through them, `kgrep` allows you to search across multiple logs or resources simultaneously, making it easier to find what you need quickly.
