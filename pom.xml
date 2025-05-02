@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.thegreatapi.kgrep</groupId>
     <artifactId>kgrep</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>v0.3.1</version>
     <properties>
         <compiler-plugin.version>3.12.1</compiler-plugin.version>
         <maven.compiler.release>24</maven.compiler.release>
