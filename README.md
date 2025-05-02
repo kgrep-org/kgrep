@@ -8,7 +8,7 @@
 
 ## Key Features
 
-* **Resource Searching**: Search the content of Kubernetes resources such as configmaps for specific patterns within designated namespaces.
+* **Resource Searching**: Search the content of Kubernetes resources such as `ConfigMaps` for specific patterns within designated namespaces.
 
 * **Log Searching**: Inspect logs from a group of pods or entire namespaces, filtering by custom patterns to locate relevant entries.
 
@@ -27,7 +27,7 @@
 
 Download a release from https://github.com/hbelmiro/kgrep/releases, uncompress it, and add it to your PATH.
 
-#### ⚠️ Unverified app warning in macOS
+#### ⚠️ Unverified app warning on macOS
 
 You can see this warning when trying to run `kgrep` for the first time on macOS.
 
