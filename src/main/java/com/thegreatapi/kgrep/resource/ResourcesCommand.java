@@ -25,7 +25,11 @@ public final class ResourcesCommand extends AbstractResourceCommand implements R
 
     @Override
     public void run() {
-        getOccurrences(namespace, pattern, apiVersion, kind).forEach(this::print);
+        if (namespace == null) {
+            getOccurrences(pattern, apiVersion, kind).forEach(this::print);
+        } else {
+            getOccurrences(namespace, pattern, apiVersion, kind).forEach(this::print);
+        }
     }
 
     @Override
