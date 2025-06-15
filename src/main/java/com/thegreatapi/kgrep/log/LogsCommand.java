@@ -16,8 +16,8 @@ public final class LogsCommand implements Runnable {
 
     private static final String BLUE = "\033[0;34m";
 
-    @CommandLine.Option(names = {"-n", "--namespace"}, description = "The Kubernetes namespace", required = true)
-    private String namespace;
+    @CommandLine.Option(names = {"-n", "--namespace"}, description = "The Kubernetes namespace")
+    private Optional<String> namespace;
 
     @CommandLine.Option(names = {"-r", "--resource-name"}, description = "Resource")
     private Optional<String> resource;
@@ -38,12 +38,22 @@ public final class LogsCommand implements Runnable {
 
     @Override
     public void run() {
-        if (resource.isPresent()) {
-            logGrepper.grep(namespace, resource.orElseThrow(), pattern, sortBy)
-                    .forEach(LogsCommand::print);
+        if (namespace.isPresent()) {
+            if (resource.isPresent()) {
+                logGrepper.grep(namespace.orElseThrow(), resource.orElseThrow(), pattern, sortBy)
+                        .forEach(LogsCommand::print);
+            } else {
+                logGrepper.grep(namespace.orElseThrow(), pattern, sortBy)
+                        .forEach(LogsCommand::print);
+            }
         } else {
-            logGrepper.grep(namespace, pattern, sortBy)
-                    .forEach(LogsCommand::print);
+            if (resource.isPresent()) {
+                logGrepper.grepResourceWithoutNamespace(resource.orElseThrow(), pattern, sortBy)
+                        .forEach(LogsCommand::print);
+            } else {
+                logGrepper.grepWithoutNamespace(pattern, sortBy)
+                        .forEach(LogsCommand::print);
+            }
         }
     }
 

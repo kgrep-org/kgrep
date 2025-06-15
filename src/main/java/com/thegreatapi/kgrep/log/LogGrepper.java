@@ -33,6 +33,24 @@ public final class LogGrepper {
         this.grep = grep;
     }
 
+    List<LogMessage> grepWithoutNamespace(String pattern) {
+        return grepWithoutNamespace(pattern, SortBy.POD_AND_CONTAINER);
+    }
+
+    List<LogMessage> grepWithoutNamespace(String pattern, SortBy sortBy) {
+        String namespace = getDefaultNamespace();
+        return grep(namespace, pattern, sortBy);
+    }
+
+    List<LogMessage> grepResourceWithoutNamespace(String resource, String pattern) {
+        return grepResourceWithoutNamespace(resource, pattern, SortBy.POD_AND_CONTAINER);
+    }
+
+    List<LogMessage> grepResourceWithoutNamespace(String resource, String pattern, SortBy sortBy) {
+        String namespace = getDefaultNamespace();
+        return grep(namespace, resource, pattern, sortBy);
+    }
+
     List<LogMessage> grep(String namespace, String pattern) {
         return grep(namespace, pattern, SortBy.POD_AND_CONTAINER);
     }
@@ -47,6 +65,17 @@ public final class LogGrepper {
 
     List<LogMessage> grep(String namespace, String resource, String pattern, SortBy sortBy) {
         return grep(namespace, pattern, sortBy, pod -> pod.getMetadata().getName().contains(resource));
+    }
+
+    private String getDefaultNamespace() {
+        String namespace = kubernetesClient.getNamespace();
+        if (namespace == null) {
+            namespace = kubernetesClient.getConfiguration().getNamespace();
+            if (namespace == null) {
+                throw new IllegalStateException("No namespace provided and no default namespace found in KubernetesClient");
+            }
+        }
+        return namespace;
     }
 
     private List<LogMessage> grep(String namespace, String pattern, SortBy sortBy, Predicate<Pod> podFilter) {

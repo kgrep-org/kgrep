@@ -73,6 +73,46 @@ class LogGrepperTest {
         );
     }
 
+    @Test
+    void testGrepWithoutNamespace() {
+        assertThat(logGrepper.grepWithoutNamespace("initialized")).containsExactly(
+                new LogMessage("pod1", "container1", "xpto initialized", 2),
+                new LogMessage("pod2", "container2", "foo initialized", 2),
+                new LogMessage("pod2", "container2", "bar initialized", 5),
+                new LogMessage("p3", "c3", "foo initialized", 2),
+                new LogMessage("p3", "c3", "bar initialized", 5)
+        );
+    }
+
+    @Test
+    void testGrepWithoutNamespaceSortByMessage() {
+        assertThat(logGrepper.grepWithoutNamespace("initialized", SortBy.MESSAGE)).containsExactly(
+                new LogMessage("pod2", "container2", "bar initialized", 5),
+                new LogMessage("p3", "c3", "bar initialized", 5),
+                new LogMessage("pod2", "container2", "foo initialized", 2),
+                new LogMessage("p3", "c3", "foo initialized", 2),
+                new LogMessage("pod1", "container1", "xpto initialized", 2)
+        );
+    }
+
+    @Test
+    void testGrepResourceWithoutNamespace() {
+        assertThat(logGrepper.grepResourceWithoutNamespace("pod", "initialized")).containsExactly(
+                new LogMessage("pod1", "container1", "xpto initialized", 2),
+                new LogMessage("pod2", "container2", "foo initialized", 2),
+                new LogMessage("pod2", "container2", "bar initialized", 5)
+        );
+    }
+
+    @Test
+    void testGrepResourceWithoutNamespaceSortByMessage() {
+        assertThat(logGrepper.grepResourceWithoutNamespace("pod", "initialized", SortBy.MESSAGE)).containsExactly(
+                new LogMessage("pod2", "container2", "bar initialized", 5),
+                new LogMessage("pod2", "container2", "foo initialized", 2),
+                new LogMessage("pod1", "container1", "xpto initialized", 2)
+        );
+    }
+
     private void createPods() {
         client.pods().resource(createPod("container1", "pod1")).create();
         client.pods().resource(createPod("container2", "pod2")).create();
