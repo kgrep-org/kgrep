@@ -40,10 +40,10 @@ class ConfigMapsCommandTest {
     void grep() {
         createConfigMaps();
 
-        List<ResourceLine> occurrences = command.getOccurrences(KIND, NAMESPACE, "kubeflow");
-
         await().atMost(20, TimeUnit.SECONDS)
                 .until(() -> command.getOccurrences(KIND, NAMESPACE, "kubeflow").size() == 5);
+
+        List<ResourceLine> occurrences = command.getOccurrences(KIND, NAMESPACE, "kubeflow");
 
         assertThat(occurrences)
                 .containsExactlyInAnyOrder(
