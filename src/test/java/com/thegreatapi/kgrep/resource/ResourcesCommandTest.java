@@ -3,9 +3,7 @@ package com.thegreatapi.kgrep.resource;
 import com.thegreatapi.kgrep.KubernetesTestsUtil;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.kubernetes.client.KubernetesTestServer;
 import io.quarkus.test.kubernetes.client.WithKubernetesTestServer;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
@@ -30,24 +28,8 @@ class ResourcesCommandTest {
 
     private final ResourcesCommand command;
 
-    @KubernetesTestServer
-    private static KubernetesServer server;
-
     @BeforeEach
     void setup() {
-        String apiV1Discovery = """
-                {
-                    "kind": "APIResourceList",
-                    "groupVersion": "v1",
-                    "resources": [
-                        {"name": "pods", "singularName": "", "namespaced": true, "kind": "Pod"},
-                        {"name": "services", "singularName": "", "namespaced": true, "kind": "Service"}
-                    ]
-                }
-                """;
-
-        server.expect().get().withPath("/api/v1").andReturn(200, apiV1Discovery).always();
-
         createPods();
     }
 

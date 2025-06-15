@@ -4,6 +4,7 @@ import io.fabric8.kubernetes.api.model.APIResource;
 import io.fabric8.kubernetes.api.model.APIResourceList;
 import io.fabric8.kubernetes.api.model.GenericKubernetesResource;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.dsl.base.ResourceDefinitionContext;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -45,9 +46,20 @@ public final class GenericResourceRetriever {
 
         if (foundResource.isPresent()) {
             String correctKind = foundResource.get().getKind();
-            return client.genericKubernetesResources(apiVersion, correctKind).inNamespace(namespace).list().getItems();
+            return getResourceDefinitionContext(namespace, apiVersion, correctKind);
         } else {
-            return client.genericKubernetesResources(apiVersion, kind).inNamespace(namespace).list().getItems();
+            return getResourceDefinitionContext(namespace, apiVersion, kind);
         }
+    }
+
+    private List<GenericKubernetesResource> getResourceDefinitionContext(String namespace, String apiVersion, String kind) {
+        ResourceDefinitionContext context = new ResourceDefinitionContext.Builder()
+                .withGroup(apiVersion.contains("/") ? apiVersion.split("/")[0] : "")
+                .withVersion(apiVersion.contains("/") ? apiVersion.split("/")[1] : apiVersion)
+                .withKind(kind)
+                .withNamespaced(true)
+                .build();
+
+        return client.genericKubernetesResources(context).inNamespace(namespace).list().getItems();
     }
 }
