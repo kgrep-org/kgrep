@@ -66,51 +66,46 @@ configmaps/acme-manager-config[107]:     \n  - \"example.org/xgboostjob\"\n# - \
 
 ## Building the project
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
-
-If you want to learn more about Quarkus, please visit its website: https://quarkus.io/ .
+This project is written in Go and uses the Cobra library for CLI commands.
 
 ## Running the application in dev mode
 
-You can run your application in dev mode that enables live coding using:
+You can run the application in development mode using:
 ```shell script
-./mvnw compile quarkus:dev
+go run main.go
 ```
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at http://localhost:8080/q/dev/.
+## Building the application
 
-## Packaging and running the application
-
-The application can be packaged using:
+You can build the application using:
 ```shell script
-./mvnw package
-```
-It produces the `quarkus-run.jar` file in the `target/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `target/quarkus-app/lib/` directory.
-
-The application is now runnable using `java -jar target/quarkus-app/quarkus-run.jar`.
-
-If you want to build an _über-jar_, execute the following command:
-```shell script
-./mvnw package -Dquarkus.package.type=uber-jar
+go build -o kgrep
 ```
 
-The application, packaged as an _über-jar_, is now runnable using `java -jar target/*-runner.jar`.
+This will produce a `kgrep` executable in the current directory.
 
-## Creating a native executable
+## Installing the application
 
-You can create a native executable using: 
+You can install the application to your GOPATH using:
 ```shell script
-./mvnw package -Dnative
+go install
 ```
 
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using: 
+## Cross-compiling for different platforms
+
+Go makes it easy to cross-compile for different platforms:
+
+For Linux:
 ```shell script
-./mvnw package -Dnative -Dquarkus.native.container-build=true
+GOOS=linux GOARCH=amd64 go build -o kgrep-linux-amd64
 ```
 
-You can then execute your native executable with: `./target/kgrep-<version>-runner`
+For macOS:
+```shell script
+GOOS=darwin GOARCH=amd64 go build -o kgrep-darwin-amd64
+```
 
-Rename the `./target/kgrep-<version>-runner` executable file to `kgrep` and add it to your PATH.
-
-If you want to learn more about building native executables, please consult https://quarkus.io/guides/maven-tooling.
+For Windows:
+```shell script
+GOOS=windows GOARCH=amd64 go build -o kgrep-windows-amd64.exe
+```
