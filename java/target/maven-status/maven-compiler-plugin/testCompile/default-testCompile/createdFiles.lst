@@ -1,0 +1,13 @@
+com/thegreatapi/kgrep/KubernetesTestsUtil.class
+com/thegreatapi/kgrep/log/FakeLogReader.class
+com/thegreatapi/kgrep/grep/GrepTest.class
+com/thegreatapi/kgrep/grep/TestModeKgrepProducer.class
+com/thegreatapi/kgrep/TestMode.class
+com/thegreatapi/kgrep/log/LogGrepperTest.class
+com/thegreatapi/kgrep/serviceaccount/ServiceAccountsCommandTest.class
+com/thegreatapi/kgrep/secret/SecretsCommandTest.class
+com/thegreatapi/kgrep/log/FakeLogReader$RegistryKey.class
+com/thegreatapi/kgrep/resource/ResourcesCommandTest.class
+com/thegreatapi/kgrep/log/LogGrepperTest$PodsCreatedFlag.class
+com/thegreatapi/kgrep/pod/PodsCommandTest.class
+com/thegreatapi/kgrep/configmap/ConfigMapsCommandTest.class

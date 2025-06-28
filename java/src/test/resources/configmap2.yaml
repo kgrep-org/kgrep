@@ -1,0 +1,32 @@
+apiVersion: v1
+data:
+  defaultPipelineRoot: s3://mlpipeline
+  providers: |
+    s3:
+      endpoint: http://minio-sample.kubeflow.svc.cluster.local:9000
+      region: minio
+      defaultProviderSecretRef:
+        secretName: teststoragesecret
+        accessKeyKey: AWS_ACCESS_KEY_ID
+        secretKeyKey: AWS_SECRET_ACCESS_KEY
+kind: ConfigMap
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","data":{"defaultPipelineRoot":"s3://mlpipeline","providers":"s3:\n  endpoint: http://minio-sample.kubeflow.svc.cluster.local:9000\n  region: minio\n  defaultProviderSecretRef:\n    secretName: teststoragesecret\n    accessKeyKey: AWS_ACCESS_KEY_ID\n    secretKeyKey: AWS_SECRET_ACCESS_KEY\n"},"kind":"ConfigMap","metadata":{"labels":{"app":"ds-pipeline-sample","component":"data-science-pipelines"},"name":"kfp-launcher","namespace":"kubeflow","ownerReferences":[{"apiVersion":"datasciencepipelinesapplications.opendatahub.io/v1alpha1","blockOwnerDeletion":true,"controller":true,"kind":"DataSciencePipelinesApplication","name":"sample","uid":"8626791e-0e95-4811-b99d-dc8526448063"}]}}
+    manifestival: new
+  creationTimestamp: "2024-02-26T19:48:09Z"
+  labels:
+    app: ds-pipeline-sample
+    component: data-science-pipelines
+  name: kfp-launcher
+  namespace: "kubeflow"
+  ownerReferences:
+  - apiVersion: datasciencepipelinesapplications.opendatahub.io/v1alpha1
+    blockOwnerDeletion: true
+    controller: true
+    kind: DataSciencePipelinesApplication
+    name: sample
+    uid: 8626791e-0e95-4811-b99d-dc8526448063
+  resourceVersion: "43007455"
+  uid: e1edbd8f-464b-44e1-9c24-ba4611300769
