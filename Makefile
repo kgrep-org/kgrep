@@ -39,6 +39,31 @@ build-tag-version:
 	echo "Building version: $(TAG)"; \
 	go build -ldflags "-X github.com/hbelmiro/kgrep/cmd.Version=$(TAG) -X github.com/hbelmiro/kgrep/cmd.BuildTime=$(shell date -u '+%Y-%m-%d_%H:%M:%S') -X github.com/hbelmiro/kgrep/cmd.CommitHash=$(shell git rev-parse --short HEAD 2>/dev/null || echo 'unknown')" -o kgrep
 
+# Cross-compilation targets for specific tag
+build-tag-version-linux-amd64:
+	@if [ -z "$(TAG)" ]; then \
+		echo "Error: TAG is required. Usage: make build-tag-version-linux-amd64 TAG=v1.0.0"; \
+		exit 1; \
+	fi; \
+	echo "Building Linux amd64 version: $(TAG)"; \
+	GOOS=linux GOARCH=amd64 go build -ldflags "-X github.com/hbelmiro/kgrep/cmd.Version=$(TAG) -X github.com/hbelmiro/kgrep/cmd.BuildTime=$(shell date -u '+%Y-%m-%d_%H:%M:%S') -X github.com/hbelmiro/kgrep/cmd.CommitHash=$(shell git rev-parse --short HEAD 2>/dev/null || echo 'unknown')" -o kgrep
+
+build-tag-version-darwin-amd64:
+	@if [ -z "$(TAG)" ]; then \
+		echo "Error: TAG is required. Usage: make build-tag-version-darwin-amd64 TAG=v1.0.0"; \
+		exit 1; \
+	fi; \
+	echo "Building macOS amd64 version: $(TAG)"; \
+	GOOS=darwin GOARCH=amd64 go build -ldflags "-X github.com/hbelmiro/kgrep/cmd.Version=$(TAG) -X github.com/hbelmiro/kgrep/cmd.BuildTime=$(shell date -u '+%Y-%m-%d_%H:%M:%S') -X github.com/hbelmiro/kgrep/cmd.CommitHash=$(shell git rev-parse --short HEAD 2>/dev/null || echo 'unknown')" -o kgrep-amd64
+
+build-tag-version-darwin-arm64:
+	@if [ -z "$(TAG)" ]; then \
+		echo "Error: TAG is required. Usage: make build-tag-version-darwin-arm64 TAG=v1.0.0"; \
+		exit 1; \
+	fi; \
+	echo "Building macOS arm64 version: $(TAG)"; \
+	GOOS=darwin GOARCH=arm64 go build -ldflags "-X github.com/hbelmiro/kgrep/cmd.Version=$(TAG) -X github.com/hbelmiro/kgrep/cmd.BuildTime=$(shell date -u '+%Y-%m-%d_%H:%M:%S') -X github.com/hbelmiro/kgrep/cmd.CommitHash=$(shell git rev-parse --short HEAD 2>/dev/null || echo 'unknown')" -o kgrep-arm64
+
 # Create a new tag and build release
 tag-and-build:
 	@if [ -z "$(VERSION)" ]; then \
@@ -58,7 +83,7 @@ list-tags:
 
 # Clean build artifacts
 clean:
-	rm -f kgrep
+	rm -f kgrep kgrep-amd64 kgrep-arm64
 
 # Run tests
 test:
