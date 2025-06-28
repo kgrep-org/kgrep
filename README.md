@@ -109,3 +109,105 @@ For Windows:
 ```shell script
 GOOS=windows GOARCH=amd64 go build -o kgrep-windows-amd64.exe
 ```
+
+## Creating Releases
+
+This project uses a tag-based release system that automatically builds and publishes binaries when you push a Git tag.
+
+### Prerequisites
+
+- Make sure you have the latest changes committed
+- Ensure all tests pass: `go test ./...`
+
+### Creating a New Release
+
+1. **Create a release tag and build:**
+   ```bash
+   ./scripts/release.sh create 1.0.0
+   ```
+   This will:
+   - Run all tests
+   - Create a Git tag (e.g., `v1.0.0`)
+   - Build the release binary with version information
+   - Show you the next steps
+
+2. **Push the tag to trigger the GitHub Actions release:**
+   ```bash
+   git push origin v1.0.0
+   ```
+
+3. **GitHub Actions will automatically:**
+   - Build binaries for Linux and macOS (amd64/arm64)
+   - Create a GitHub release
+   - Upload the binaries to the release
+
+### Building for Existing Tags
+
+If you need to rebuild a release for an existing tag:
+
+```bash
+# Build for the latest tag
+./scripts/release.sh latest
+
+# Build for a specific tag
+./scripts/release.sh build v1.0.0
+```
+
+### Development Builds
+
+For development builds:
+
+```bash
+# Development build with "dev" version
+make build-dev
+
+# Or using the Makefile
+make build-dev
+```
+
+### Available Release Commands
+
+```bash
+# Show all available commands
+./scripts/release.sh help
+
+# List all available tags
+./scripts/release.sh list
+
+# Clean build artifacts
+./scripts/release.sh clean
+```
+
+### Version Information
+
+The built binaries include version information that can be displayed with:
+
+```bash
+./kgrep version
+```
+
+This shows:
+- Version number (from Git tag or "dev" for development builds)
+- Build timestamp
+- Git commit hash
+
+### Makefile Targets
+
+You can also use Makefile targets for building:
+
+```bash
+# Development build
+make build-dev
+
+# Build for latest tag
+make build-tag
+
+# Build for specific tag
+make build-tag-version TAG=v1.0.0
+
+# Create new tag and build
+make tag-and-build VERSION=1.0.0
+
+# List available tags
+make list-tags
+```
