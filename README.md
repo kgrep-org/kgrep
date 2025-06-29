@@ -6,28 +6,52 @@
 
 `kgrep` is a command-line utility designed to simplify the process of searching and analyzing logs and resources in Kubernetes. Unlike traditional methods that involve printing resource definitions and grepping through them, `kgrep` allows you to search across multiple logs or resources simultaneously, making it easier to find what you need quickly.
 
+---
+
+## Table of Contents
+
+- [Why kgrep?](#why-kgrep)
+- [Key Features](#key-features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Building the Project](#building-the-project)
+- [Running the Application in Dev Mode](#running-the-application-in-dev-mode)
+- [Building the Application](#building-the-application)
+- [Installing the Application](#installing-the-application)
+- [Cross-compiling for Different Platforms](#cross-compiling-for-different-platforms)
+- [Creating Releases](#creating-releases)
+- [Version Information](#version-information)
+- [Makefile Targets](#makefile-targets)
+- [Contributing](#contributing)
+- [License](#license)
+- [Contact](#contact)
+
+---
+
+## Why kgrep?
+
+Searching Kubernetes resources and logs with `kubectl` and `grep` can be tedious and error-prone, especially across multiple namespaces or resource types. `kgrep` streamlines this process by providing a single, powerful CLI for searching logs and resources, supporting pattern matching, namespace selection, and more. This saves time and reduces the risk of missing important information.
+
 ## Key Features
 
-* **Resource Searching**: Search the content of Kubernetes resources such as `ConfigMaps` for specific patterns within designated namespaces.
-
+* **Resource Searching**: Search the content of Kubernetes resources such as `ConfigMaps`, `Secrets`, `Pods`, and `ServiceAccounts` for specific patterns within designated namespaces.
 * **Log Searching**: Inspect logs from a group of pods or entire namespaces, filtering by custom patterns to locate relevant entries.
-
 * **Namespace Specification**: Every search command supports namespace specification, allowing users to focus their queries on particular sections of their Kubernetes cluster.
-
 * **Pattern-based Filtering**: Utilize pattern matching to refine search results, ensuring that only the most pertinent data is returned.
 
 ## Installation
 
 ### Prerequisites
 
-- [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed and configured to connect to your
-  Kubernetes cluster.
+- [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed and configured to connect to your Kubernetes cluster.
+- Go 1.24+ (for building from source)
 
 ### Download the binary and add it to your PATH
 
 Download a release from https://github.com/hbelmiro/kgrep/releases, uncompress it, and add it to your PATH.
 
-#### ⚠️ Unverified app warning on macOS
+<details>
+<summary>⚠️ Unverified app warning on macOS</summary>
 
 You can see this warning when trying to run `kgrep` for the first time on macOS.
 
@@ -46,67 +70,93 @@ When you try to run it again, you'll see a final warning. Just click "Open Anywa
 
 ![open-anyway.png](resources/open-anyway.png)
 
-## Example
+</details>
 
-To search for `example` in `ConfigMaps` definitions in the `my_namespace` namespace: 
+## Usage
 
-```shell
-$ kgrep configmaps -n my_namespace -p "example"
+Type `kgrep --help` to check all the commands and options.
+
+### Search for a pattern in ConfigMaps in a namespace
+```sh
+kgrep configmaps -n my_namespace -p "example"
+```
+
+### Search for a pattern in all Secrets
+```sh
+kgrep secrets -p "password"
+```
+
+### Search for a pattern in Pod logs in a specific namespace
+```sh
+kgrep logs -n my-namespace -p "error"
+```
+
+### Search for a pattern in ServiceAccounts
+```sh
+kgrep serviceaccounts -n my-namespace -p "my-service-account"
+```
+
+### Search for a pattern in any resource kind (generic)
+```sh
+kgrep resources --kind Deployment --pattern "replicas: 3" --namespace my-namespace
+```
+
+### Example Output
+```
 configmaps/example-config-4khgb5fg64[7]:     internal.config.kubernetes.io/previousNames: "example-config-4khgb5fg64"
 configmaps/example-config-4khgb5fg64[48]:   name: "example-config-4khgb5fg64"
 configmaps/example-config-5fmk4f7h8k[7]:     internal.config.kubernetes.io/previousNames: "example-config-5fmk4f7h8k"
 configmaps/example-config-5fmk4f7h8k[57]:   name: "example-config-5fmk4f7h8k"
-configmaps/acme-manager-config[104]:     \  frameworks:\n  - \"batch/job\"\n  - \"example.org/mpijob\"\n  - \"acme.io/acmejob\"\
-configmaps/acme-manager-config[105]:     \n  - \"acme.io/acmecluster\"\n  - \"jobset.x-k8s.io/jobset\"\n  - \"example.org/mxjob\"\
-configmaps/acme-manager-config[106]:     \n  - \"example.org/paddlejob\"\n  - \"example.org/acmejob\"\n  - \"example.org/tfjob\"\
-configmaps/acme-manager-config[107]:     \n  - \"example.org/xgboostjob\"\n# - \"pod\"\n  externalFrameworks:\n
+configmaps/acme-manager-config[104]:     \  frameworks:\n  - "batch/job"\n  - "example.org/mpijob"\n  - "acme.io/acmejob"\
+configmaps/acme-manager-config[105]:     \n  - "acme.io/acmecluster"\n  - "jobset.x-k8s.io/jobset"\n  - "example.org/mxjob"\
+configmaps/acme-manager-config[106]:     \n  - "example.org/paddlejob"\n  - "example.org/acmejob"\n  - "example.org/tfjob"\
+configmaps/acme-manager-config[107]:     \n  - "example.org/xgboostjob"\n# - "pod"\n  externalFrameworks:\n
 ```
 
-💡 Type `kgrep --help` to check all the commands.
+---
 
-## Building the project
+## Building the Project
 
 This project is written in Go and uses the Cobra library for CLI commands.
 
-## Running the application in dev mode
+## Running the Application in Dev Mode
 
 You can run the application in development mode using:
-```shell script
+```sh
 go run main.go
 ```
 
-## Building the application
+## Building the Application
 
 You can build the application using:
-```shell script
+```sh
 go build -o kgrep
 ```
-
 This will produce a `kgrep` executable in the current directory.
 
-## Installing the application
+## Installing the Application
 
 You can install the application to your GOPATH using:
-```shell script
+```sh
 go install
 ```
 
-## Cross-compiling for different platforms
+## Cross-compiling for Different Platforms
 
 Go makes it easy to cross-compile for different platforms:
 
 For Linux:
-```shell script
+```sh
 GOOS=linux GOARCH=amd64 go build -o kgrep-linux-amd64
 ```
 
 For macOS:
-```shell script
+```sh
 GOOS=darwin GOARCH=amd64 go build -o kgrep-darwin-amd64
 ```
 
 For Windows:
-```shell script
+```sh
 GOOS=windows GOARCH=amd64 go build -o kgrep-windows-amd64.exe
 ```
 
@@ -122,7 +172,7 @@ This project uses a tag-based release system that automatically builds and publi
 ### Creating a New Release
 
 1. **Create a release tag and build:**
-   ```bash
+   ```sh
    ./scripts/release.sh create 1.0.0
    ```
    This will:
@@ -132,7 +182,7 @@ This project uses a tag-based release system that automatically builds and publi
    - Show you the next steps
 
 2. **Push the tag to trigger the GitHub Actions release:**
-   ```bash
+   ```sh
    git push origin v1.0.0
    ```
 
@@ -145,7 +195,7 @@ This project uses a tag-based release system that automatically builds and publi
 
 If you need to rebuild a release for an existing tag:
 
-```bash
+```sh
 # Build for the latest tag
 ./scripts/release.sh latest
 
@@ -157,17 +207,17 @@ If you need to rebuild a release for an existing tag:
 
 For development builds:
 
-```bash
+```sh
 # Development build with "dev" version
 make build-dev
 
 # Or using the Makefile
-make build-dev
+go build -ldflags "-X github.com/hbelmiro/kgrep/cmd.Version=dev ..." -o kgrep
 ```
 
 ### Available Release Commands
 
-```bash
+```sh
 # Show all available commands
 ./scripts/release.sh help
 
@@ -178,11 +228,11 @@ make build-dev
 ./scripts/release.sh clean
 ```
 
-### Version Information
+## Version Information
 
 The built binaries include version information that can be displayed with:
 
-```bash
+```sh
 ./kgrep version
 ```
 
@@ -191,11 +241,11 @@ This shows:
 - Build timestamp
 - Git commit hash
 
-### Makefile Targets
+## Makefile Targets
 
-You can also use Makefile targets for building:
+You can also use Makefile targets for building and release automation:
 
-```bash
+```sh
 # Development build
 make build-dev
 
@@ -210,4 +260,36 @@ make tag-and-build VERSION=1.0.0
 
 # List available tags
 make list-tags
+
+# Clean build artifacts
+make clean
+
+# Run tests
+make test
 ```
+
+---
+
+## Contributing
+
+Contributions are welcome! To get started:
+
+1. Fork this repository and clone your fork.
+2. Create a new branch for your feature or bugfix.
+3. Make your changes and add tests if applicable.
+4. Open a pull request describing your changes.
+
+Please ensure your code follows the existing style and passes all tests (`go test ./...`).
+
+---
+
+## License
+
+This project is licensed under the [Apache 2.0 License](LICENSE).
+
+---
+
+## Contact
+
+- Issues and feature requests: [GitHub Issues](https://github.com/hbelmiro/kgrep/issues)
+- Maintainer: [@hbelmiro](https://github.com/hbelmiro)
