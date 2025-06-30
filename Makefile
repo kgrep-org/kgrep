@@ -46,7 +46,31 @@ build-tag-version-linux-amd64:
 		exit 1; \
 	fi; \
 	echo "Building Linux amd64 version: $(TAG)"; \
-	GOOS=linux GOARCH=amd64 go build -ldflags "-X github.com/hbelmiro/kgrep/cmd.Version=$(TAG) -X github.com/hbelmiro/kgrep/cmd.BuildTime=$(shell date -u '+%Y-%m-%d_%H:%M:%S') -X github.com/hbelmiro/kgrep/cmd.CommitHash=$(shell git rev-parse --short HEAD 2>/dev/null || echo 'unknown')" -o kgrep
+	GOOS=linux GOARCH=amd64 go build -ldflags "-X github.com/hbelmiro/kgrep/cmd.Version=$(TAG) -X github.com/hbelmiro/kgrep/cmd.BuildTime=$(shell date -u '+%Y-%m-%d_%H:%M:%S') -X github.com/hbelmiro/kgrep/cmd.CommitHash=$(shell git rev-parse --short HEAD 2>/dev/null || echo 'unknown')" -o kgrep-amd64
+
+build-tag-version-linux-arm64:
+	@if [ -z "$(TAG)" ]; then \
+		echo "Error: TAG is required. Usage: make build-tag-version-linux-arm64 TAG=v1.0.0"; \
+		exit 1; \
+	fi; \
+	echo "Building Linux arm64 version: $(TAG)"; \
+	GOOS=linux GOARCH=arm64 go build -ldflags "-X github.com/hbelmiro/kgrep/cmd.Version=$(TAG) -X github.com/hbelmiro/kgrep/cmd.BuildTime=$(shell date -u '+%Y-%m-%d_%H:%M:%S') -X github.com/hbelmiro/kgrep/cmd.CommitHash=$(shell git rev-parse --short HEAD 2>/dev/null || echo 'unknown')" -o kgrep-arm64
+
+build-tag-version-windows-amd64:
+	@if [ -z "$(TAG)" ]; then \
+		echo "Error: TAG is required. Usage: make build-tag-version-windows-amd64 TAG=v1.0.0"; \
+		exit 1; \
+	fi; \
+	echo "Building Windows amd64 version: $(TAG)"; \
+	GOOS=windows GOARCH=amd64 go build -ldflags "-X github.com/hbelmiro/kgrep/cmd.Version=$(TAG) -X github.com/hbelmiro/kgrep/cmd.BuildTime=$(shell date -u '+%Y-%m-%d_%H:%M:%S') -X github.com/hbelmiro/kgrep/cmd.CommitHash=$(shell git rev-parse --short HEAD 2>/dev/null || echo 'unknown')" -o kgrep-amd64.exe
+
+build-tag-version-windows-arm64:
+	@if [ -z "$(TAG)" ]; then \
+		echo "Error: TAG is required. Usage: make build-tag-version-windows-arm64 TAG=v1.0.0"; \
+		exit 1; \
+	fi; \
+	echo "Building Windows arm64 version: $(TAG)"; \
+	GOOS=windows GOARCH=arm64 go build -ldflags "-X github.com/hbelmiro/kgrep/cmd.Version=$(TAG) -X github.com/hbelmiro/kgrep/cmd.BuildTime=$(shell date -u '+%Y-%m-%d_%H:%M:%S') -X github.com/hbelmiro/kgrep/cmd.CommitHash=$(shell git rev-parse --short HEAD 2>/dev/null || echo 'unknown')" -o kgrep-arm64.exe
 
 build-tag-version-darwin-amd64:
 	@if [ -z "$(TAG)" ]; then \
@@ -83,7 +107,7 @@ list-tags:
 
 # Clean build artifacts
 clean:
-	rm -f kgrep kgrep-amd64 kgrep-arm64
+	rm -f kgrep kgrep-amd64 kgrep-arm64 kgrep-amd64.exe kgrep-arm64.exe
 
 # Run tests
 test:

@@ -6,60 +6,180 @@ on:
       - "v*.*.*"
 
 jobs:
-  publish-linux-binary:
+  build-linux-amd64:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch all history for proper tag information
+          fetch-depth: 0
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24.4'
-      - name: Build Linux amd64 binary
+          go-version-file: ./go.mod
+      - name: Extract tag name
+        id: tag
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      - name: Build Linux amd64
         run: |
-          # Extract tag name (remove 'refs/tags/' prefix)
-          TAG_NAME=${GITHUB_REF#refs/tags/}
-          # Build using Makefile target with proper version information
-          make build-tag-version-linux-amd64 TAG=$TAG_NAME
-      - name: Compress
+          make build-tag-version-linux-amd64 TAG=${{ steps.tag.outputs.tag }}
+          mv kgrep-amd64 kgrep
+      - name: Create archive
         run: tar -czf kgrep-linux-amd64.tar.gz kgrep
-      - name: Release
-        uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
-          files: kgrep-linux-amd64.tar.gz
+          name: kgrep-linux-amd64
+          path: kgrep-linux-amd64.tar.gz
 
-  publish-macos-binaries:
+  build-linux-arm64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: ./go.mod
+      - name: Extract tag name
+        id: tag
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      - name: Build Linux arm64
+        run: |
+          make build-tag-version-linux-arm64 TAG=${{ steps.tag.outputs.tag }}
+          mv kgrep-arm64 kgrep
+      - name: Create archive
+        run: tar -czf kgrep-linux-arm64.tar.gz kgrep
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kgrep-linux-arm64
+          path: kgrep-linux-arm64.tar.gz
+
+  build-windows-amd64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: ./go.mod
+      - name: Extract tag name
+        id: tag
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      - name: Build Windows amd64
+        run: |
+          make build-tag-version-windows-amd64 TAG=${{ steps.tag.outputs.tag }}
+          mv kgrep-amd64.exe kgrep.exe
+      - name: Create archives
+        run: |
+          tar -czf kgrep-windows-amd64.tar.gz kgrep.exe
+          zip kgrep-windows-amd64.zip kgrep.exe
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: kgrep-windows-amd64
+          path: |
+            kgrep-windows-amd64.tar.gz
+            kgrep-windows-amd64.zip
+
+  build-windows-arm64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: ./go.mod
+      - name: Extract tag name
+        id: tag
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      - name: Build Windows arm64
+        run: |
+          make build-tag-version-windows-arm64 TAG=${{ steps.tag.outputs.tag }}
+          mv kgrep-arm64.exe kgrep.exe
+      - name: Create archives
+        run: |
+          tar -czf kgrep-windows-arm64.tar.gz kgrep.exe
+          zip kgrep-windows-arm64.zip kgrep.exe
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: kgrep-windows-arm64
+          path: |
+            kgrep-windows-arm64.tar.gz
+            kgrep-windows-arm64.zip
+
+  build-macos-amd64:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch all history for proper tag information
+          fetch-depth: 0
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24.4'
-      - name: Build macOS amd64 binary
+          go-version-file: ./go.mod
+      - name: Extract tag name
+        id: tag
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      - name: Build macOS amd64
         run: |
-          # Extract tag name (remove 'refs/tags/' prefix)
-          TAG_NAME=${GITHUB_REF#refs/tags/}
-          # Build using Makefile target with proper version information
-          make build-tag-version-darwin-amd64 TAG=$TAG_NAME
-      - name: Build macOS arm64 binary
+          make build-tag-version-darwin-amd64 TAG=${{ steps.tag.outputs.tag }}
+          mv kgrep-amd64 kgrep
+      - name: Create archive
+        run: tar -czf kgrep-macos-amd64.tar.gz kgrep
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kgrep-macos-amd64
+          path: kgrep-macos-amd64.tar.gz
+
+  build-macos-arm64:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: ./go.mod
+      - name: Extract tag name
+        id: tag
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      - name: Build macOS arm64
         run: |
-          # Extract tag name (remove 'refs/tags/' prefix)
-          TAG_NAME=${GITHUB_REF#refs/tags/}
-          # Build using Makefile target with proper version information
-          make build-tag-version-darwin-arm64 TAG=$TAG_NAME
-      - name: Compress amd64
-        run: tar -czf kgrep-macos-amd64.tar.gz kgrep-amd64
-      - name: Compress arm64
-        run: tar -czf kgrep-macos-arm64.tar.gz kgrep-arm64
+          make build-tag-version-darwin-arm64 TAG=${{ steps.tag.outputs.tag }}
+          mv kgrep-arm64 kgrep
+      - name: Create archive
+        run: tar -czf kgrep-macos-arm64.tar.gz kgrep
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kgrep-macos-arm64
+          path: kgrep-macos-arm64.tar.gz
+
+  release:
+    needs: [build-linux-amd64, build-linux-arm64, build-windows-amd64, build-windows-arm64, build-macos-amd64, build-macos-arm64]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
       - name: Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            kgrep-macos-amd64.tar.gz
-            kgrep-macos-arm64.tar.gz
+            kgrep-linux-amd64/kgrep-linux-amd64.tar.gz
+            kgrep-linux-arm64/kgrep-linux-arm64.tar.gz
+            kgrep-windows-amd64/kgrep-windows-amd64.tar.gz
+            kgrep-windows-amd64/kgrep-windows-amd64.zip
+            kgrep-windows-arm64/kgrep-windows-arm64.tar.gz
+            kgrep-windows-arm64/kgrep-windows-arm64.zip
+            kgrep-macos-amd64/kgrep-macos-amd64.tar.gz
+            kgrep-macos-arm64/kgrep-macos-arm64.tar.gz
