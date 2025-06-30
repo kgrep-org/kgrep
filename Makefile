@@ -107,7 +107,7 @@ list-tags:
 
 # Clean build artifacts
 clean:
-	rm -f kgrep kgrep-amd64 kgrep-arm64 kgrep-amd64.exe kgrep-arm64.exe
+	rm -f kgrep kgrep-amd64 kgrep-arm64 kgrep.exe kgrep-amd64.exe kgrep-arm64.exe
 
 # Run tests
 test:
