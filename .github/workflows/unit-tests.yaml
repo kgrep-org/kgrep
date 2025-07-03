@@ -1,4 +1,4 @@
-name: CI
+name: Unit Tests
 
 on:
   push:
@@ -30,16 +30,3 @@ jobs:
         with:
           name: go-coverage
           path: go_cover.out
-
-  dependabot:
-    permissions: write-all
-    name: 'Dependabot'
-    needs: [ go ]
-    runs-on: ubuntu-latest
-    if: ${{ github.actor == 'dependabot[bot]' && github.event_name == 'pull_request'}}
-    steps:
-      - name: Enable auto-merge for Dependabot PRs
-        run: gh pr merge --auto --merge "$PR_URL"
-        env:
-          PR_URL: ${{github.event.pull_request.html_url}}
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
