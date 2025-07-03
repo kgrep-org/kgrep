@@ -172,13 +172,13 @@ func createTestServiceAccount(t *testing.T, clientset kubernetes.Interface) {
 
 func runKgrepCommand(t *testing.T, args ...string) (string, error) {
 	if _, err := os.Stat("../../kgrep"); os.IsNotExist(err) {
-		buildCmd := exec.Command("go", "build", "-o", "../../kgrep", "../../main.go")
-		buildCmd.Dir = "../../"
+		buildCmd := exec.Command("go", "build", "-o", "kgrep", "main.go")
+		buildCmd.Dir = "."
 		err := buildCmd.Run()
 		require.NoError(t, err, "Failed to build kgrep binary")
 	}
 
-	cmd := exec.Command("../../kgrep", args...)
+	cmd := exec.Command("./kgrep", args...)
 	cmd.Dir = "."
 	output, err := cmd.CombinedOutput()
 	return string(output), err
