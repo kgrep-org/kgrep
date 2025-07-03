@@ -288,14 +288,24 @@ func TestIntegration_LogSearch(t *testing.T) {
 	t.Logf("Log search output: %s", output)
 }
 
-func TestIntegration_DefaultNamespaceSearch(t *testing.T) {
+func TestIntegration_CurrentNamespaceSearch(t *testing.T) {
 	clientset := setupKubernetesClient(t)
 
-	createTestConfigMap(t, clientset, "default")
+	// Get the current namespace from kubeconfig context
+	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+	configOverrides := &clientcmd.ConfigOverrides{}
+	kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
+
+	currentNamespace, _, err := kubeConfig.Namespace()
+	if err != nil || currentNamespace == "" {
+		currentNamespace = "default"
+	}
+
+	createTestConfigMap(t, clientset, currentNamespace)
 	defer func() {
-		err := clientset.CoreV1().ConfigMaps("default").Delete(context.Background(), "test-config", metav1.DeleteOptions{})
+		err := clientset.CoreV1().ConfigMaps(currentNamespace).Delete(context.Background(), "test-config", metav1.DeleteOptions{})
 		if err != nil {
-			t.Logf("Warning: Failed to cleanup ConfigMap in default namespace: %v", err)
+			t.Logf("Warning: Failed to cleanup ConfigMap in namespace %s: %v", currentNamespace, err)
 		}
 	}()
 
@@ -304,7 +314,7 @@ func TestIntegration_DefaultNamespaceSearch(t *testing.T) {
 
 	assert.Contains(t, output, "test-config")
 	assert.Contains(t, output, "my-test-app")
-	t.Logf("Default namespace search output: %s", output)
+	t.Logf("Current namespace (%s) search output: %s", currentNamespace, output)
 }
 
 func TestIntegration_GenericResourceSearch(t *testing.T) {
