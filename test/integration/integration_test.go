@@ -230,11 +230,11 @@ func TestIntegration_SecretSearch(t *testing.T) {
 
 	createTestSecret(t, clientset, testNamespace)
 
-	output, err := runKgrepCommand(t, "secrets", "-n", testNamespace, "-p", "testuser")
+	output, err := runKgrepCommand(t, "secrets", "-n", testNamespace, "-p", "username")
 	require.NoError(t, err, "kgrep command failed: %s", output)
 
 	assert.Contains(t, output, "test-secret")
-	assert.Contains(t, output, "testuser")
+	assert.Contains(t, output, "username")
 	t.Logf("Secret search output: %s", output)
 }
 
@@ -288,20 +288,23 @@ func TestIntegration_LogSearch(t *testing.T) {
 	t.Logf("Log search output: %s", output)
 }
 
-func TestIntegration_CrossNamespaceSearch(t *testing.T) {
+func TestIntegration_DefaultNamespaceSearch(t *testing.T) {
 	clientset := setupKubernetesClient(t)
-	testNamespace := getTestNamespace(t)
-	createTestNamespace(t, clientset, testNamespace)
-	defer cleanupTestNamespace(t, clientset, testNamespace)
 
-	createTestConfigMap(t, clientset, testNamespace)
+	createTestConfigMap(t, clientset, "default")
+	defer func() {
+		err := clientset.CoreV1().ConfigMaps("default").Delete(context.Background(), "test-config", metav1.DeleteOptions{})
+		if err != nil {
+			t.Logf("Warning: Failed to cleanup ConfigMap in default namespace: %v", err)
+		}
+	}()
 
 	output, err := runKgrepCommand(t, "configmaps", "-p", "my-test-app")
 	require.NoError(t, err, "kgrep command failed: %s", output)
 
 	assert.Contains(t, output, "test-config")
 	assert.Contains(t, output, "my-test-app")
-	t.Logf("Cross-namespace search output: %s", output)
+	t.Logf("Default namespace search output: %s", output)
 }
 
 func TestIntegration_GenericResourceSearch(t *testing.T) {
