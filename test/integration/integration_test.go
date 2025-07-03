@@ -18,8 +18,8 @@ import (
 )
 
 const (
-	testNamespace = "kgrep-integration-test"
-	timeout       = 30 * time.Second
+	testNamespacePrefix = "kgrep-integration-test"
+	timeout             = 30 * time.Second
 )
 
 func TestMain(m *testing.M) {
@@ -30,6 +30,10 @@ func TestMain(m *testing.M) {
 
 	code := m.Run()
 	os.Exit(code)
+}
+
+func getTestNamespace(t *testing.T) string {
+	return fmt.Sprintf("%s-%d", testNamespacePrefix, time.Now().UnixNano())
 }
 
 func setupKubernetesClient(t *testing.T) kubernetes.Interface {
@@ -49,10 +53,10 @@ func setupKubernetesClient(t *testing.T) kubernetes.Interface {
 	return clientset
 }
 
-func createTestNamespace(t *testing.T, clientset kubernetes.Interface) {
+func createTestNamespace(t *testing.T, clientset kubernetes.Interface, namespaceName string) {
 	namespace := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: testNamespace,
+			Name: namespaceName,
 		},
 	}
 
@@ -62,18 +66,18 @@ func createTestNamespace(t *testing.T, clientset kubernetes.Interface) {
 	}
 }
 
-func cleanupTestNamespace(t *testing.T, clientset kubernetes.Interface) {
-	err := clientset.CoreV1().Namespaces().Delete(context.Background(), testNamespace, metav1.DeleteOptions{})
+func cleanupTestNamespace(t *testing.T, clientset kubernetes.Interface, namespaceName string) {
+	err := clientset.CoreV1().Namespaces().Delete(context.Background(), namespaceName, metav1.DeleteOptions{})
 	if err != nil && !strings.Contains(err.Error(), "not found") {
 		t.Logf("Warning: Failed to cleanup test namespace: %v", err)
 	}
 }
 
-func createTestConfigMap(t *testing.T, clientset kubernetes.Interface) {
+func createTestConfigMap(t *testing.T, clientset kubernetes.Interface, namespaceName string) {
 	configMap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-config",
-			Namespace: testNamespace,
+			Namespace: namespaceName,
 		},
 		Data: map[string]string{
 			"app.properties": "database.url=postgresql://localhost:5432/mydb\napp.name=my-test-app\napp.version=1.0.0",
@@ -81,15 +85,15 @@ func createTestConfigMap(t *testing.T, clientset kubernetes.Interface) {
 		},
 	}
 
-	_, err := clientset.CoreV1().ConfigMaps(testNamespace).Create(context.Background(), configMap, metav1.CreateOptions{})
+	_, err := clientset.CoreV1().ConfigMaps(namespaceName).Create(context.Background(), configMap, metav1.CreateOptions{})
 	require.NoError(t, err)
 }
 
-func createTestSecret(t *testing.T, clientset kubernetes.Interface) {
+func createTestSecret(t *testing.T, clientset kubernetes.Interface, namespaceName string) {
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-secret",
-			Namespace: testNamespace,
+			Namespace: namespaceName,
 		},
 		Data: map[string][]byte{
 			"username": []byte("testuser"),
@@ -98,15 +102,15 @@ func createTestSecret(t *testing.T, clientset kubernetes.Interface) {
 		},
 	}
 
-	_, err := clientset.CoreV1().Secrets(testNamespace).Create(context.Background(), secret, metav1.CreateOptions{})
+	_, err := clientset.CoreV1().Secrets(namespaceName).Create(context.Background(), secret, metav1.CreateOptions{})
 	require.NoError(t, err)
 }
 
-func createTestPod(t *testing.T, clientset kubernetes.Interface) {
+func createTestPod(t *testing.T, clientset kubernetes.Interface, namespaceName string) {
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-pod",
-			Namespace: testNamespace,
+			Namespace: namespaceName,
 			Labels: map[string]string{
 				"app":        "test-app",
 				"component":  "backend",
@@ -130,7 +134,7 @@ func createTestPod(t *testing.T, clientset kubernetes.Interface) {
 		},
 	}
 
-	_, err := clientset.CoreV1().Pods(testNamespace).Create(context.Background(), pod, metav1.CreateOptions{})
+	_, err := clientset.CoreV1().Pods(namespaceName).Create(context.Background(), pod, metav1.CreateOptions{})
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -141,7 +145,7 @@ func createTestPod(t *testing.T, clientset kubernetes.Interface) {
 		case <-ctx.Done():
 			t.Fatal("Timeout waiting for pod to be ready")
 		default:
-			pod, err := clientset.CoreV1().Pods(testNamespace).Get(context.Background(), "test-pod", metav1.GetOptions{})
+			pod, err := clientset.CoreV1().Pods(namespaceName).Get(context.Background(), "test-pod", metav1.GetOptions{})
 			if err != nil {
 				time.Sleep(2 * time.Second)
 				continue
@@ -154,11 +158,11 @@ func createTestPod(t *testing.T, clientset kubernetes.Interface) {
 	}
 }
 
-func createTestServiceAccount(t *testing.T, clientset kubernetes.Interface) {
+func createTestServiceAccount(t *testing.T, clientset kubernetes.Interface, namespaceName string) {
 	sa := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-service-account",
-			Namespace: testNamespace,
+			Namespace: namespaceName,
 			Annotations: map[string]string{
 				"description": "Test service account for kgrep integration tests",
 				"owner":       "kgrep-team",
@@ -166,30 +170,49 @@ func createTestServiceAccount(t *testing.T, clientset kubernetes.Interface) {
 		},
 	}
 
-	_, err := clientset.CoreV1().ServiceAccounts(testNamespace).Create(context.Background(), sa, metav1.CreateOptions{})
+	_, err := clientset.CoreV1().ServiceAccounts(namespaceName).Create(context.Background(), sa, metav1.CreateOptions{})
 	require.NoError(t, err)
+}
+
+func waitForLogs(clientset kubernetes.Interface, namespace, podName, expectedContent string, timeout time.Duration) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("timeout waiting for logs containing '%s'", expectedContent)
+		default:
+			req := clientset.CoreV1().Pods(namespace).GetLogs(podName, &corev1.PodLogOptions{})
+			logs, err := req.Do(context.Background()).Raw()
+			if err == nil && strings.Contains(string(logs), expectedContent) {
+				return nil
+			}
+			time.Sleep(2 * time.Second)
+		}
+	}
 }
 
 func runKgrepCommand(t *testing.T, args ...string) (string, error) {
 	if _, err := os.Stat("../../kgrep"); os.IsNotExist(err) {
 		buildCmd := exec.Command("go", "build", "-o", "kgrep", "main.go")
-		buildCmd.Dir = "."
+		buildCmd.Dir = "../../"
 		err := buildCmd.Run()
 		require.NoError(t, err, "Failed to build kgrep binary")
 	}
 
-	cmd := exec.Command("./kgrep", args...)
-	cmd.Dir = "."
+	cmd := exec.Command("../../kgrep", args...)
 	output, err := cmd.CombinedOutput()
 	return string(output), err
 }
 
 func TestIntegration_ConfigMapSearch(t *testing.T) {
 	clientset := setupKubernetesClient(t)
-	createTestNamespace(t, clientset)
-	defer cleanupTestNamespace(t, clientset)
+	testNamespace := getTestNamespace(t)
+	createTestNamespace(t, clientset, testNamespace)
+	defer cleanupTestNamespace(t, clientset, testNamespace)
 
-	createTestConfigMap(t, clientset)
+	createTestConfigMap(t, clientset, testNamespace)
 
 	output, err := runKgrepCommand(t, "configmaps", "-n", testNamespace, "-p", "database")
 	require.NoError(t, err, "kgrep command failed: %s", output)
@@ -201,10 +224,11 @@ func TestIntegration_ConfigMapSearch(t *testing.T) {
 
 func TestIntegration_SecretSearch(t *testing.T) {
 	clientset := setupKubernetesClient(t)
-	createTestNamespace(t, clientset)
-	defer cleanupTestNamespace(t, clientset)
+	testNamespace := getTestNamespace(t)
+	createTestNamespace(t, clientset, testNamespace)
+	defer cleanupTestNamespace(t, clientset, testNamespace)
 
-	createTestSecret(t, clientset)
+	createTestSecret(t, clientset, testNamespace)
 
 	output, err := runKgrepCommand(t, "secrets", "-n", testNamespace, "-p", "testuser")
 	require.NoError(t, err, "kgrep command failed: %s", output)
@@ -216,10 +240,11 @@ func TestIntegration_SecretSearch(t *testing.T) {
 
 func TestIntegration_PodSearch(t *testing.T) {
 	clientset := setupKubernetesClient(t)
-	createTestNamespace(t, clientset)
-	defer cleanupTestNamespace(t, clientset)
+	testNamespace := getTestNamespace(t)
+	createTestNamespace(t, clientset, testNamespace)
+	defer cleanupTestNamespace(t, clientset, testNamespace)
 
-	createTestPod(t, clientset)
+	createTestPod(t, clientset, testNamespace)
 
 	output, err := runKgrepCommand(t, "pods", "-n", testNamespace, "-p", "test-app")
 	require.NoError(t, err, "kgrep command failed: %s", output)
@@ -231,10 +256,11 @@ func TestIntegration_PodSearch(t *testing.T) {
 
 func TestIntegration_ServiceAccountSearch(t *testing.T) {
 	clientset := setupKubernetesClient(t)
-	createTestNamespace(t, clientset)
-	defer cleanupTestNamespace(t, clientset)
+	testNamespace := getTestNamespace(t)
+	createTestNamespace(t, clientset, testNamespace)
+	defer cleanupTestNamespace(t, clientset, testNamespace)
 
-	createTestServiceAccount(t, clientset)
+	createTestServiceAccount(t, clientset, testNamespace)
 
 	output, err := runKgrepCommand(t, "serviceaccounts", "-n", testNamespace, "-p", "kgrep-team")
 	require.NoError(t, err, "kgrep command failed: %s", output)
@@ -246,10 +272,11 @@ func TestIntegration_ServiceAccountSearch(t *testing.T) {
 
 func TestIntegration_LogSearch(t *testing.T) {
 	clientset := setupKubernetesClient(t)
-	createTestNamespace(t, clientset)
-	defer cleanupTestNamespace(t, clientset)
+	testNamespace := getTestNamespace(t)
+	createTestNamespace(t, clientset, testNamespace)
+	defer cleanupTestNamespace(t, clientset, testNamespace)
 
-	createTestPod(t, clientset)
+	createTestPod(t, clientset, testNamespace)
 
 	err := waitForLogs(clientset, testNamespace, "test-pod", "Application", timeout)
 	require.NoError(t, err, "Failed to retrieve logs within timeout")
@@ -263,10 +290,11 @@ func TestIntegration_LogSearch(t *testing.T) {
 
 func TestIntegration_CrossNamespaceSearch(t *testing.T) {
 	clientset := setupKubernetesClient(t)
-	createTestNamespace(t, clientset)
-	defer cleanupTestNamespace(t, clientset)
+	testNamespace := getTestNamespace(t)
+	createTestNamespace(t, clientset, testNamespace)
+	defer cleanupTestNamespace(t, clientset, testNamespace)
 
-	createTestConfigMap(t, clientset)
+	createTestConfigMap(t, clientset, testNamespace)
 
 	output, err := runKgrepCommand(t, "configmaps", "-p", "my-test-app")
 	require.NoError(t, err, "kgrep command failed: %s", output)
@@ -278,10 +306,11 @@ func TestIntegration_CrossNamespaceSearch(t *testing.T) {
 
 func TestIntegration_GenericResourceSearch(t *testing.T) {
 	clientset := setupKubernetesClient(t)
-	createTestNamespace(t, clientset)
-	defer cleanupTestNamespace(t, clientset)
+	testNamespace := getTestNamespace(t)
+	createTestNamespace(t, clientset, testNamespace)
+	defer cleanupTestNamespace(t, clientset, testNamespace)
 
-	createTestPod(t, clientset)
+	createTestPod(t, clientset, testNamespace)
 
 	output, err := runKgrepCommand(t, "resources", "--kind", "Pod", "--pattern", "backend", "--namespace", testNamespace)
 	require.NoError(t, err, "kgrep command failed: %s", output)
@@ -293,13 +322,14 @@ func TestIntegration_GenericResourceSearch(t *testing.T) {
 
 func TestIntegration_MultipleResourceTypesSetup(t *testing.T) {
 	clientset := setupKubernetesClient(t)
-	createTestNamespace(t, clientset)
-	defer cleanupTestNamespace(t, clientset)
+	testNamespace := getTestNamespace(t)
+	createTestNamespace(t, clientset, testNamespace)
+	defer cleanupTestNamespace(t, clientset, testNamespace)
 
-	createTestConfigMap(t, clientset)
-	createTestSecret(t, clientset)
-	createTestPod(t, clientset)
-	createTestServiceAccount(t, clientset)
+	createTestConfigMap(t, clientset, testNamespace)
+	createTestSecret(t, clientset, testNamespace)
+	createTestPod(t, clientset, testNamespace)
+	createTestServiceAccount(t, clientset, testNamespace)
 	tests := []struct {
 		name    string
 		cmd     []string
