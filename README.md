@@ -1,7 +1,8 @@
 # kgrep
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Build Status](https://github.com/hbelmiro/kgrep/actions/workflows/ci.yaml/badge.svg)](https://github.com/hbelmiro/kgrep/actions/workflows/ci.yaml)
+[![Unit Tests](https://github.com/hbelmiro/kgrep/actions/workflows/unit-tests.yaml/badge.svg)](https://github.com/hbelmiro/kgrep/actions/workflows/unit-tests.yaml)
+[![Integration Tests](https://github.com/hbelmiro/kgrep/actions/workflows/integration-tests.yaml/badge.svg)](https://github.com/hbelmiro/kgrep/actions/workflows/integration-tests.yaml)
 [![Latest Release](https://img.shields.io/github/v/release/hbelmiro/kgrep)](https://github.com/hbelmiro/kgrep/releases)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/hbelmiro/kgrep)
 
@@ -265,11 +266,47 @@ make list-tags
 # Clean build artifacts
 make clean
 
-# Run tests
+# Run unit tests
 make test
+
+# Run integration tests (requires kubectl access)
+make test-integration
+
+# Run integration tests with kind (creates local cluster)
+make test-integration-kind
 ```
 
 ---
+
+## Testing
+
+This project includes both unit tests and integration tests:
+
+### Unit Tests
+
+Unit tests use mocked Kubernetes clients and can be run without a real cluster:
+
+```sh
+# Run unit tests
+make test
+
+# Or directly with go
+go test ./...
+```
+
+### Integration Tests
+
+Integration tests require a real Kubernetes cluster and test end-to-end scenarios:
+
+```sh
+# Run integration tests with your current kubectl context
+make test-integration
+
+# Run integration tests with a temporary kind cluster (recommended)
+make test-integration-kind
+```
+
+For more details about integration tests, see [test/integration/README.md](test/integration/README.md).
 
 ## Contributing
 
@@ -280,7 +317,14 @@ Contributions are welcome! To get started:
 3. Make your changes and add tests if applicable.
 4. Open a pull request describing your changes.
 
-Please ensure your code follows the existing style and passes all tests (`go test ./...`).
+Please ensure your code follows the existing style and passes all tests:
+```sh
+# Run unit tests
+make test
+
+# Run integration tests (optional but recommended)
+make test-integration-kind
+```
 
 ---
 

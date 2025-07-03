@@ -113,6 +113,32 @@ clean:
 test:
 	go test ./...
 
+# Run integration tests (requires a running Kubernetes cluster)
+test-integration:
+	@echo "Running integration tests..."
+	@echo "Make sure you have a running Kubernetes cluster accessible via kubectl"
+	cd test/integration && KGREP_INTEGRATION_TESTS=true go test -v -timeout=10m ./...
+
+# Run integration tests with kind (creates a local cluster)
+test-integration-kind:
+	@echo "Setting up kind cluster for integration tests..."
+	@if ! command -v kind > /dev/null 2>&1; then \
+		echo "Error: kind is not installed. Please install it first: https://kind.sigs.k8s.io/docs/user/quick-start/#installation"; \
+		exit 1; \
+	fi
+	@if ! command -v kubectl > /dev/null 2>&1; then \
+		echo "Error: kubectl is not installed. Please install it first: https://kubernetes.io/docs/tasks/tools/install-kubectl/"; \
+		exit 1; \
+	fi
+	@echo "Creating kind cluster..."
+	kind create cluster --name kgrep-integration-test --image kindest/node:v1.31.0 || true
+	@echo "Waiting for cluster to be ready..."
+	kubectl wait --for=condition=Ready nodes --all --timeout=300s
+	@echo "Running integration tests..."
+	cd test/integration && KGREP_INTEGRATION_TESTS=true go test -v -timeout=10m ./...
+	@echo "Cleaning up kind cluster..."
+	kind delete cluster --name kgrep-integration-test || true
+
 # Install development version
 install-dev:
 	go install -ldflags "-X github.com/hbelmiro/kgrep/cmd.Version=dev -X github.com/hbelmiro/kgrep/cmd.BuildTime=$(shell date -u '+%Y-%m-%d_%H:%M:%S') -X github.com/hbelmiro/kgrep/cmd.CommitHash=$(shell git rev-parse --short HEAD 2>/dev/null || echo 'unknown')"
