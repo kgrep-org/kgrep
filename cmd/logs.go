@@ -27,20 +27,36 @@ var logsCmd = &cobra.Command{
 			return fmt.Errorf("pattern is required")
 		}
 
-		grepper := log.NewLogGrepper()
+		grepper, err := log.NewLogGrepper()
+		if err != nil {
+			return fmt.Errorf("failed to create log grepper: %v", err)
+		}
+
 		var messages []log.Message
 
 		if logsNamespace != "" {
 			if logsResource != "" {
-				messages = grepper.Grep(logsNamespace, logsResource, logsPattern, logsSortBy)
+				messages, err = grepper.Grep(logsNamespace, logsResource, logsPattern, logsSortBy)
+				if err != nil {
+					return fmt.Errorf("failed to search logs: %v", err)
+				}
 			} else {
-				messages = grepper.GrepNamespace(logsNamespace, logsPattern, logsSortBy)
+				messages, err = grepper.GrepNamespace(logsNamespace, logsPattern, logsSortBy)
+				if err != nil {
+					return fmt.Errorf("failed to search logs: %v", err)
+				}
 			}
 		} else {
 			if logsResource != "" {
-				messages = grepper.GrepResourceWithoutNamespace(logsResource, logsPattern, logsSortBy)
+				messages, err = grepper.GrepResourceWithoutNamespace(logsResource, logsPattern, logsSortBy)
+				if err != nil {
+					return fmt.Errorf("failed to search logs: %v", err)
+				}
 			} else {
-				messages = grepper.GrepWithoutNamespace(logsPattern, logsSortBy)
+				messages, err = grepper.GrepWithoutNamespace(logsPattern, logsSortBy)
+				if err != nil {
+					return fmt.Errorf("failed to search logs: %v", err)
+				}
 			}
 		}
 

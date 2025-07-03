@@ -4,6 +4,7 @@ go 1.24.4
 
 require (
 	github.com/fatih/color v1.18.0
+	github.com/hbelmiro/go-kube-get v0.1.0-alpha
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
 	k8s.io/api v0.33.2

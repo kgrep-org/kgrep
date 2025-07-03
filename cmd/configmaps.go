@@ -21,13 +21,22 @@ var configmapsCmd = &cobra.Command{
 			return fmt.Errorf("pattern is required")
 		}
 
-		resourceSearcher := resource.NewResourceSearcher("configmaps")
-		var occurrences []resource.Occurrence
+		resourceSearcher, err := resource.NewResourceSearcher("configmaps")
+		if err != nil {
+			return fmt.Errorf("failed to create resource searcher: %v", err)
+		}
 
+		var occurrences []resource.Occurrence
 		if configmapsNamespace != "" {
-			occurrences = resourceSearcher.Search(configmapsNamespace, configmapsPattern)
+			occurrences, err = resourceSearcher.Search(configmapsNamespace, configmapsPattern)
+			if err != nil {
+				return fmt.Errorf("failed to search configmaps: %v", err)
+			}
 		} else {
-			occurrences = resourceSearcher.SearchWithoutNamespace(configmapsPattern)
+			occurrences, err = resourceSearcher.SearchWithoutNamespace(configmapsPattern)
+			if err != nil {
+				return fmt.Errorf("failed to search configmaps: %v", err)
+			}
 		}
 
 		printResourceOccurrences(occurrences, configmapsPattern)

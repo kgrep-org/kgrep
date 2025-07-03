@@ -8,43 +8,50 @@ import (
 )
 
 var (
-	serviceAccountsNamespace string
-	serviceAccountsPattern   string
+	serviceaccountsNamespace string
+	serviceaccountsPattern   string
 )
 
-var serviceAccountsCmd = &cobra.Command{
+var serviceaccountsCmd = &cobra.Command{
 	Use:   "serviceaccounts",
 	Short: "Search ServiceAccounts in Kubernetes",
-	Long:  `Search the content of Kubernetes ServiceAccounts for specific patterns within designated namespaces.`,
+	Long:  `Search the content of ServiceAccounts for specific patterns within designated namespaces.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if serviceAccountsPattern == "" {
+		if serviceaccountsPattern == "" {
 			return fmt.Errorf("pattern is required")
 		}
 
-		resourceSearcher := resource.NewResourceSearcher("serviceaccounts")
+		resourceSearcher, err := resource.NewResourceSearcher("serviceaccounts")
+		if err != nil {
+			return fmt.Errorf("failed to create resource searcher: %v", err)
+		}
+
 		var occurrences []resource.Occurrence
-
-		if serviceAccountsNamespace != "" {
-			occurrences = resourceSearcher.Search(serviceAccountsNamespace, serviceAccountsPattern)
+		if serviceaccountsNamespace != "" {
+			occurrences, err = resourceSearcher.Search(serviceaccountsNamespace, serviceaccountsPattern)
+			if err != nil {
+				return fmt.Errorf("failed to search serviceaccounts: %v", err)
+			}
 		} else {
-			occurrences = resourceSearcher.SearchWithoutNamespace(serviceAccountsPattern)
+			occurrences, err = resourceSearcher.SearchWithoutNamespace(serviceaccountsPattern)
+			if err != nil {
+				return fmt.Errorf("failed to search serviceaccounts: %v", err)
+			}
 		}
 
-		for _, occ := range occurrences {
-			fmt.Printf("serviceaccounts/%s[%d]: %s\n", occ.Resource, occ.Line, occ.Content)
-		}
+		printResourceOccurrences(occurrences, serviceaccountsPattern)
 
 		return nil
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(serviceAccountsCmd)
+	rootCmd.AddCommand(serviceaccountsCmd)
 
-	serviceAccountsCmd.Flags().StringVarP(&serviceAccountsNamespace, "namespace", "n", "", "The Kubernetes namespace")
-	serviceAccountsCmd.Flags().StringVarP(&serviceAccountsPattern, "pattern", "p", "", "grep search pattern")
+	serviceaccountsCmd.Flags().StringVarP(&serviceaccountsNamespace, "namespace", "n", "", "The Kubernetes namespace")
+	serviceaccountsCmd.Flags().StringVarP(&serviceaccountsPattern, "pattern", "p", "", "grep search pattern")
 
-	if err := serviceAccountsCmd.MarkFlagRequired("pattern"); err != nil {
+	if err := serviceaccountsCmd.MarkFlagRequired("pattern"); err != nil {
 		panic(fmt.Sprintf("failed to mark pattern flag as required: %v", err))
 	}
 }
