@@ -24,13 +24,22 @@ var secretsCmd = &cobra.Command{
 			return fmt.Errorf("pattern is required")
 		}
 
-		resourceSearcher := resource.NewResourceSearcher("secrets")
-		var occurrences []resource.Occurrence
+		resourceSearcher, err := resource.NewResourceSearcher("secrets")
+		if err != nil {
+			return fmt.Errorf("failed to create resource searcher: %v", err)
+		}
 
+		var occurrences []resource.Occurrence
 		if secretsNamespace != "" {
-			occurrences = resourceSearcher.Search(secretsNamespace, secretsPattern)
+			occurrences, err = resourceSearcher.Search(secretsNamespace, secretsPattern)
+			if err != nil {
+				return fmt.Errorf("failed to search secrets: %v", err)
+			}
 		} else {
-			occurrences = resourceSearcher.SearchWithoutNamespace(secretsPattern)
+			occurrences, err = resourceSearcher.SearchWithoutNamespace(secretsPattern)
+			if err != nil {
+				return fmt.Errorf("failed to search secrets: %v", err)
+			}
 		}
 
 		printResourceOccurrences(occurrences, secretsPattern)

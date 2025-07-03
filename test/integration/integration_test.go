@@ -13,6 +13,9 @@ import (
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -291,7 +294,6 @@ func TestIntegration_LogSearch(t *testing.T) {
 func TestIntegration_CurrentNamespaceSearch(t *testing.T) {
 	clientset := setupKubernetesClient(t)
 
-	// Get the current namespace from kubeconfig context
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
 	configOverrides := &clientcmd.ConfigOverrides{}
 	kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
@@ -376,6 +378,323 @@ func TestIntegration_MultipleResourceTypesSetup(t *testing.T) {
 			require.NoError(t, err, "kgrep command failed: %s", output)
 			assert.Contains(t, output, tt.expects)
 			t.Logf("%s output: %s", tt.name, output)
+		})
+	}
+}
+
+func setupDynamicClient(t *testing.T) dynamic.Interface {
+	kubeconfig := os.Getenv("KUBECONFIG")
+	if kubeconfig == "" {
+		homeDir, err := os.UserHomeDir()
+		require.NoError(t, err)
+		kubeconfig = fmt.Sprintf("%s/.kube/config", homeDir)
+	}
+
+	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	require.NoError(t, err)
+
+	dynamicClient, err := dynamic.NewForConfig(config)
+	require.NoError(t, err)
+
+	return dynamicClient
+}
+
+func applyTestCRD(t *testing.T) {
+	cmd := exec.Command("kubectl", "apply", "-f", "test-crd.yaml")
+	cmd.Dir = "."
+	output, err := cmd.CombinedOutput()
+	require.NoError(t, err, "Failed to apply test CRD: %s", output)
+	t.Logf("Applied test CRD: %s", output)
+
+	time.Sleep(5 * time.Second)
+}
+
+func deleteTestCRD(t *testing.T) {
+	cmd := exec.Command("kubectl", "delete", "-f", "test-crd.yaml", "--ignore-not-found=true")
+	cmd.Dir = "."
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Logf("Warning: Failed to delete test CRD: %s", output)
+	} else {
+		t.Logf("Deleted test CRD: %s", output)
+	}
+}
+
+func createTestCustomResource(t *testing.T, dynamicClient dynamic.Interface, namespaceName string) {
+	gvr := schema.GroupVersionResource{
+		Group:    "test.kgrep.io",
+		Version:  "v1",
+		Resource: "testapplications",
+	}
+
+	testResource := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "test.kgrep.io/v1",
+			"kind":       "TestApplication",
+			"metadata": map[string]interface{}{
+				"name":      "test-app",
+				"namespace": namespaceName,
+				"labels": map[string]interface{}{
+					"app":        "test-application",
+					"component":  "backend",
+					"fraud":      "detection",
+					"version":    "v1.0.0",
+					"managed-by": "kgrep-integration-test",
+				},
+			},
+			"spec": map[string]interface{}{
+				"name":        "Test Application",
+				"version":     "1.0.0",
+				"description": "A test application for kgrep integration tests with fraud detection capabilities",
+				"tags": []interface{}{
+					"testing",
+					"fraud-detection",
+					"integration",
+					"backend-service",
+				},
+			},
+			"status": map[string]interface{}{
+				"phase": "Ready",
+				"conditions": []interface{}{
+					map[string]interface{}{
+						"type":    "Ready",
+						"status":  "True",
+						"reason":  "ApplicationReady",
+						"message": "Application is ready for fraud detection",
+					},
+				},
+			},
+		},
+	}
+
+	_, err := dynamicClient.Resource(gvr).Namespace(namespaceName).Create(context.Background(), testResource, metav1.CreateOptions{})
+	require.NoError(t, err)
+	t.Logf("Created test custom resource in namespace %s", namespaceName)
+}
+
+func cleanupTestCustomResources(t *testing.T, dynamicClient dynamic.Interface, namespaceName string) {
+	gvr := schema.GroupVersionResource{
+		Group:    "test.kgrep.io",
+		Version:  "v1",
+		Resource: "testapplications",
+	}
+
+	err := dynamicClient.Resource(gvr).Namespace(namespaceName).DeleteCollection(context.Background(), metav1.DeleteOptions{}, metav1.ListOptions{})
+	if err != nil {
+		t.Logf("Warning: Failed to cleanup test custom resources: %v", err)
+	}
+}
+
+func TestIntegration_CustomResourceAutoDiscovery(t *testing.T) {
+	clientset := setupKubernetesClient(t)
+	dynamicClient := setupDynamicClient(t)
+	testNamespace := getTestNamespace(t)
+
+	applyTestCRD(t)
+	defer deleteTestCRD(t)
+
+	createTestNamespace(t, clientset, testNamespace)
+	defer cleanupTestNamespace(t, clientset, testNamespace)
+	defer cleanupTestCustomResources(t, dynamicClient, testNamespace)
+
+	createTestCustomResource(t, dynamicClient, testNamespace)
+
+	output, err := runKgrepCommand(t, "resources", "--kind", "TestApplication", "--pattern", "fraud", "--namespace", testNamespace)
+	require.NoError(t, err, "kgrep command failed: %s", output)
+
+	assert.Contains(t, output, "test-app")
+	assert.Contains(t, output, "fraud")
+	t.Logf("Custom resource auto-discovery output: %s", output)
+}
+
+func TestIntegration_ResourceNameFormats(t *testing.T) {
+	clientset := setupKubernetesClient(t)
+	dynamicClient := setupDynamicClient(t)
+	testNamespace := getTestNamespace(t)
+
+	applyTestCRD(t)
+	defer deleteTestCRD(t)
+
+	createTestNamespace(t, clientset, testNamespace)
+	defer cleanupTestNamespace(t, clientset, testNamespace)
+	defer cleanupTestCustomResources(t, dynamicClient, testNamespace)
+
+	createTestCustomResource(t, dynamicClient, testNamespace)
+
+	testCases := []struct {
+		name         string
+		resourceName string
+		description  string
+	}{
+		{
+			name:         "plural name",
+			resourceName: "testapplications",
+			description:  "Test with plural resource name",
+		},
+		{
+			name:         "short name",
+			resourceName: "tapp",
+			description:  "Test with short name (alias)",
+		},
+		{
+			name:         "resource.group format",
+			resourceName: "testapplications.test.kgrep.io",
+			description:  "Test with resource.group format",
+		},
+		{
+			name:         "Kind name",
+			resourceName: "TestApplication",
+			description:  "Test with Kind name",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			output, err := runKgrepCommand(t, "resources", "--kind", tc.resourceName, "--pattern", "fraud", "--namespace", testNamespace)
+			require.NoError(t, err, "kgrep command failed for %s: %s", tc.resourceName, output)
+
+			assert.Contains(t, output, "test-app")
+			assert.Contains(t, output, "fraud")
+			t.Logf("%s (%s) output: %s", tc.description, tc.resourceName, output)
+		})
+	}
+}
+
+func TestIntegration_ResourceGroupFallback(t *testing.T) {
+	clientset := setupKubernetesClient(t)
+	dynamicClient := setupDynamicClient(t)
+	testNamespace := getTestNamespace(t)
+
+	applyTestCRD(t)
+	defer deleteTestCRD(t)
+
+	createTestNamespace(t, clientset, testNamespace)
+	defer cleanupTestNamespace(t, clientset, testNamespace)
+	defer cleanupTestCustomResources(t, dynamicClient, testNamespace)
+
+	createTestCustomResource(t, dynamicClient, testNamespace)
+
+	// This mimics the behavior from issue #125 where datasciencepipelinesapplications.opendatahub.io
+	// should fallback to datasciencepipelinesapplications
+	output, err := runKgrepCommand(t, "resources", "--kind", "testapplications.test.kgrep.io", "--pattern", "fraud", "--namespace", testNamespace)
+	require.NoError(t, err, "kgrep command failed for fallback test: %s", output)
+
+	assert.Contains(t, output, "test-app")
+	assert.Contains(t, output, "fraud")
+	t.Logf("Resource.group fallback test output: %s", output)
+
+	output2, err := runKgrepCommand(t, "resources", "--kind", "testapplications", "--pattern", "fraud", "--namespace", testNamespace)
+	require.NoError(t, err, "kgrep command failed for simple plural test: %s", output2)
+
+	assert.Contains(t, output2, "test-app")
+	assert.Contains(t, output2, "fraud")
+
+	assert.Contains(t, output, "test-app")
+	assert.Contains(t, output2, "test-app")
+	t.Logf("Simple plural name test output: %s", output2)
+}
+
+func TestIntegration_CustomResourceErrors(t *testing.T) {
+	clientset := setupKubernetesClient(t)
+	testNamespace := getTestNamespace(t)
+
+	createTestNamespace(t, clientset, testNamespace)
+	defer cleanupTestNamespace(t, clientset, testNamespace)
+
+	output, err := runKgrepCommand(t, "resources", "--kind", "NonExistentResource", "--pattern", "anything", "--namespace", testNamespace)
+	require.Error(t, err, "Expected error for non-existent resource type")
+
+	assert.Contains(t, output, "error")
+	t.Logf("Non-existent resource error output: %s", output)
+
+	output2, err := runKgrepCommand(t, "resources", "--kind", "invalid..resource...name", "--pattern", "anything", "--namespace", testNamespace)
+	require.Error(t, err, "Expected error for malformed resource name")
+
+	assert.Contains(t, output2, "error")
+	t.Logf("Malformed resource name error output: %s", output2)
+}
+
+func TestIntegration_KubectlCompatibility(t *testing.T) {
+	clientset := setupKubernetesClient(t)
+	dynamicClient := setupDynamicClient(t)
+	testNamespace := getTestNamespace(t)
+
+	applyTestCRD(t)
+	defer deleteTestCRD(t)
+
+	createTestNamespace(t, clientset, testNamespace)
+	defer cleanupTestNamespace(t, clientset, testNamespace)
+	defer cleanupTestCustomResources(t, dynamicClient, testNamespace)
+
+	createTestCustomResource(t, dynamicClient, testNamespace)
+
+	kubectlCmd := exec.Command("kubectl", "get", "testapplications", "-n", testNamespace, "-o", "name")
+	kubectlOutput, err := kubectlCmd.CombinedOutput()
+	require.NoError(t, err, "kubectl command failed: %s", kubectlOutput)
+
+	kubectlResources := strings.TrimSpace(string(kubectlOutput))
+	assert.Contains(t, kubectlResources, "test-app")
+	t.Logf("kubectl found resources: %s", kubectlResources)
+
+	kgrepOutput, err := runKgrepCommand(t, "resources", "--kind", "testapplications", "--pattern", "fraud", "--namespace", testNamespace)
+	require.NoError(t, err, "kgrep command failed: %s", kgrepOutput)
+
+	assert.Contains(t, kgrepOutput, "test-app")
+	t.Logf("kgrep found resources: %s", kgrepOutput)
+
+	assert.Contains(t, kubectlResources, "test-app")
+	assert.Contains(t, kgrepOutput, "test-app")
+}
+
+func TestIntegration_CustomResourceSearchContent(t *testing.T) {
+	clientset := setupKubernetesClient(t)
+	dynamicClient := setupDynamicClient(t)
+	testNamespace := getTestNamespace(t)
+
+	applyTestCRD(t)
+	defer deleteTestCRD(t)
+
+	createTestNamespace(t, clientset, testNamespace)
+	defer cleanupTestNamespace(t, clientset, testNamespace)
+	defer cleanupTestCustomResources(t, dynamicClient, testNamespace)
+
+	createTestCustomResource(t, dynamicClient, testNamespace)
+
+	testCases := []struct {
+		name     string
+		pattern  string
+		expected string
+	}{
+		{
+			name:     "search in labels",
+			pattern:  "fraud",
+			expected: "test-app",
+		},
+		{
+			name:     "search in spec",
+			pattern:  "Test Application",
+			expected: "test-app",
+		},
+		{
+			name:     "search in tags",
+			pattern:  "fraud-detection",
+			expected: "test-app",
+		},
+		{
+			name:     "search in status",
+			pattern:  "ApplicationReady",
+			expected: "test-app",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			output, err := runKgrepCommand(t, "resources", "--kind", "TestApplication", "--pattern", tc.pattern, "--namespace", testNamespace)
+			require.NoError(t, err, "kgrep command failed for %s: %s", tc.name, output)
+
+			assert.Contains(t, output, tc.expected)
+			assert.Contains(t, output, tc.pattern)
+			t.Logf("%s output: %s", tc.name, output)
 		})
 	}
 }

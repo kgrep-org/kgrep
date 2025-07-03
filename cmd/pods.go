@@ -15,19 +15,28 @@ var (
 var podsCmd = &cobra.Command{
 	Use:   "pods",
 	Short: "Search Pods in Kubernetes",
-	Long:  `Search the content of Kubernetes Pods for specific patterns within designated namespaces.`,
+	Long:  `Search the content of Pods for specific patterns within designated namespaces.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if podsPattern == "" {
 			return fmt.Errorf("pattern is required")
 		}
 
-		resourceSearcher := resource.NewResourceSearcher("pods")
-		var occurrences []resource.Occurrence
+		resourceSearcher, err := resource.NewResourceSearcher("pods")
+		if err != nil {
+			return fmt.Errorf("failed to create resource searcher: %v", err)
+		}
 
+		var occurrences []resource.Occurrence
 		if podsNamespace != "" {
-			occurrences = resourceSearcher.Search(podsNamespace, podsPattern)
+			occurrences, err = resourceSearcher.Search(podsNamespace, podsPattern)
+			if err != nil {
+				return fmt.Errorf("failed to search pods: %v", err)
+			}
 		} else {
-			occurrences = resourceSearcher.SearchWithoutNamespace(podsPattern)
+			occurrences, err = resourceSearcher.SearchWithoutNamespace(podsPattern)
+			if err != nil {
+				return fmt.Errorf("failed to search pods: %v", err)
+			}
 		}
 
 		printResourceOccurrences(occurrences, podsPattern)

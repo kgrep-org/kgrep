@@ -7,13 +7,14 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
+
+	"github.com/hbelmiro/go-kube-get/pkg/gokubeget"
 )
 
 // Searcher is responsible for searching patterns in Kubernetes resources.
@@ -25,28 +26,32 @@ type Searcher struct {
 	clientset     kubernetes.Interface
 	dynamicClient dynamic.Interface
 	config        *rest.Config
+	kubeGet       *gokubeget.KubeGet
 }
 
 // NewResourceSearcher creates a new ResourceSearcher for the specified resource type.
-func NewResourceSearcher(resourceType string) *Searcher {
+func NewResourceSearcher(resourceType string) (*Searcher, error) {
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
 	configOverrides := &clientcmd.ConfigOverrides{}
 	config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides).ClientConfig()
 	if err != nil {
-		fmt.Printf("Error creating Kubernetes config: %v\n", err)
-		return &Searcher{resourceType: resourceType}
+		return nil, fmt.Errorf("error creating Kubernetes config: %v", err)
 	}
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		fmt.Printf("Error creating Kubernetes clientset: %v\n", err)
-		return &Searcher{resourceType: resourceType}
+		return nil, fmt.Errorf("error creating Kubernetes clientset: %v", err)
 	}
 
 	dynamicClient, err := dynamic.NewForConfig(config)
 	if err != nil {
-		fmt.Printf("Error creating dynamic client: %v\n", err)
-		return &Searcher{resourceType: resourceType}
+		return nil, fmt.Errorf("error creating dynamic client: %v", err)
+	}
+
+	kubeGet, err := gokubeget.NewKubeGet(config)
+	if err != nil {
+		// kubeGet is optional for core resources, so we don't return an error here
+		kubeGet = nil
 	}
 
 	return &Searcher{
@@ -54,29 +59,33 @@ func NewResourceSearcher(resourceType string) *Searcher {
 		dynamicClient: dynamicClient,
 		config:        config,
 		resourceType:  resourceType,
-	}
+		kubeGet:       kubeGet,
+	}, nil
 }
 
 // NewGenericResourceSearcher creates a new ResourceSearcher for generic resources with API version and kind.
-func NewGenericResourceSearcher(apiVersion, kind string) *Searcher {
+func NewGenericResourceSearcher(apiVersion, kind string) (*Searcher, error) {
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
 	configOverrides := &clientcmd.ConfigOverrides{}
 	config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides).ClientConfig()
 	if err != nil {
-		fmt.Printf("Error creating Kubernetes config: %v\n", err)
-		return &Searcher{apiVersion: apiVersion, kind: kind}
+		return nil, fmt.Errorf("error creating Kubernetes config: %v", err)
 	}
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		fmt.Printf("Error creating Kubernetes clientset: %v\n", err)
-		return &Searcher{apiVersion: apiVersion, kind: kind}
+		return nil, fmt.Errorf("error creating Kubernetes clientset: %v", err)
 	}
 
 	dynamicClient, err := dynamic.NewForConfig(config)
 	if err != nil {
-		fmt.Printf("Error creating dynamic client: %v\n", err)
-		return &Searcher{apiVersion: apiVersion, kind: kind}
+		return nil, fmt.Errorf("error creating dynamic client: %v", err)
+	}
+
+	kubeGet, err := gokubeget.NewKubeGet(config)
+	if err != nil {
+		// kubeGet is optional for core resources, so we don't return an error here
+		kubeGet = nil
 	}
 
 	return &Searcher{
@@ -85,29 +94,33 @@ func NewGenericResourceSearcher(apiVersion, kind string) *Searcher {
 		config:        config,
 		apiVersion:    apiVersion,
 		kind:          kind,
-	}
+		kubeGet:       kubeGet,
+	}, nil
 }
 
 // NewAutoDiscoveryResourceSearcher creates a new ResourceSearcher that auto-discovers API version and kind.
-func NewAutoDiscoveryResourceSearcher(kind string) *Searcher {
+func NewAutoDiscoveryResourceSearcher(kind string) (*Searcher, error) {
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
 	configOverrides := &clientcmd.ConfigOverrides{}
 	config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides).ClientConfig()
 	if err != nil {
-		fmt.Printf("Error creating Kubernetes config: %v\n", err)
-		return &Searcher{kind: kind}
+		return nil, fmt.Errorf("error creating Kubernetes config: %v", err)
 	}
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		fmt.Printf("Error creating Kubernetes clientset: %v\n", err)
-		return &Searcher{kind: kind}
+		return nil, fmt.Errorf("error creating Kubernetes clientset: %v", err)
 	}
 
 	dynamicClient, err := dynamic.NewForConfig(config)
 	if err != nil {
-		fmt.Printf("Error creating dynamic client: %v\n", err)
-		return &Searcher{kind: kind}
+		return nil, fmt.Errorf("error creating dynamic client: %v", err)
+	}
+
+	kubeGet, err := gokubeget.NewKubeGet(config)
+	if err != nil {
+		// kubeGet is optional for core resources, so we don't return an error here
+		kubeGet = nil
 	}
 
 	return &Searcher{
@@ -115,30 +128,28 @@ func NewAutoDiscoveryResourceSearcher(kind string) *Searcher {
 		dynamicClient: dynamicClient,
 		config:        config,
 		kind:          kind,
-	}
+		kubeGet:       kubeGet,
+	}, nil
 }
 
 // SearchWithoutNamespace searches for a pattern in resources in the default namespace.
-func (s *Searcher) SearchWithoutNamespace(pattern string) []Occurrence {
+func (s *Searcher) SearchWithoutNamespace(pattern string) ([]Occurrence, error) {
 	namespace, err := s.getDefaultNamespace()
 	if err != nil {
-		fmt.Printf("Error getting default namespace: %v\n", err)
-		return []Occurrence{}
+		return nil, fmt.Errorf("error getting default namespace: %v", err)
 	}
 	return s.Search(namespace, pattern)
 }
 
 // Search searches for a pattern in resources in a specific namespace.
-func (s *Searcher) Search(namespace, pattern string) []Occurrence {
+func (s *Searcher) Search(namespace, pattern string) ([]Occurrence, error) {
 	if s.clientset == nil {
-		fmt.Printf("Error: Kubernetes clientset not available\n")
-		return []Occurrence{}
+		return nil, fmt.Errorf("Kubernetes clientset not available")
 	}
 
 	resources, err := s.getResources(namespace)
 	if err != nil {
-		fmt.Printf("Error getting resources: %v\n", err)
-		return []Occurrence{}
+		return nil, fmt.Errorf("error getting resources: %v", err)
 	}
 
 	var occurrences []Occurrence
@@ -147,7 +158,7 @@ func (s *Searcher) Search(namespace, pattern string) []Occurrence {
 		occurrences = append(occurrences, resourceOccurrences...)
 	}
 
-	return occurrences
+	return occurrences, nil
 }
 
 // searchResource searches for a pattern in a specific resource.
@@ -290,60 +301,41 @@ func (s *Searcher) getServiceAccountNames(namespace string) ([]string, error) {
 
 // getGenericResourceNames gets resource names for generic resources.
 func (s *Searcher) getGenericResourceNames(namespace string) ([]string, error) {
-	if s.dynamicClient == nil {
-		return nil, fmt.Errorf("dynamic client not available")
+	if s.kubeGet == nil {
+		return nil, fmt.Errorf("kubeGet client not available")
 	}
 
-	// If we only have kind, try to discover the API version
-	apiVersion := s.apiVersion
 	kind := s.kind
 
-	if apiVersion == "" && kind != "" {
-		var err error
-		apiVersion, kind, s.resourceName, err = s.discoverAPIVersionAndKind()
-		if err != nil {
-			return nil, fmt.Errorf("auto-discovery failed: %v", err)
+	// Try the kind as-is first with go-kube-get
+	_, resources, err := s.kubeGet.Get(context.Background(), kind, namespace)
+	if err == nil {
+		var names []string
+		for _, resource := range resources.Items {
+			names = append(names, resource.GetName())
+		}
+		return names, nil
+	}
+
+	// If that failed and it looks like resource.group format (like datasciencepipelinesapplications.opendatahub.io),
+	// try just the resource name part
+	if strings.Contains(kind, ".") && !strings.Contains(kind, ".v") {
+		parts := strings.Split(kind, ".")
+		if len(parts) >= 2 {
+			resourceName := parts[0]
+			_, resources, err := s.kubeGet.Get(context.Background(), resourceName, namespace)
+			if err == nil {
+				var names []string
+				for _, resource := range resources.Items {
+					names = append(names, resource.GetName())
+				}
+				return names, nil
+			}
 		}
 	}
 
-	// Parse API version to get group and version
-	var group, version string
-	if strings.Contains(apiVersion, "/") {
-		parts := strings.Split(apiVersion, "/")
-		group = parts[0]
-		version = parts[1]
-	} else {
-		version = apiVersion
-	}
-
-	// Create GVR (GroupVersionResource)
-	resourceName := s.resourceName
-	if resourceName == "" {
-		// Fallback to constructing from kind if resourceName not discovered
-		resourceName = strings.ToLower(kind) + "s"
-	}
-
-	gvr := schema.GroupVersionResource{
-		Group:    group,
-		Version:  version,
-		Resource: resourceName,
-	}
-
-	// Get the dynamic resource interface
-	resourceInterface := s.dynamicClient.Resource(gvr).Namespace(namespace)
-
-	// List resources
-	list, err := resourceInterface.List(context.Background(), metav1.ListOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("error listing %s resources: %v", kind, err)
-	}
-
-	var names []string
-	for _, item := range list.Items {
-		names = append(names, item.GetName())
-	}
-
-	return names, nil
+	// Return the original error if nothing worked
+	return nil, fmt.Errorf("error getting %s resources: %v", s.kind, err)
 }
 
 // getResourceYAML gets the YAML representation of a specific resource.
@@ -387,55 +379,45 @@ func (s *Searcher) getResourceYAML(namespace, resource string) (string, error) {
 
 // getGenericResourceYAML gets YAML for generic resources.
 func (s *Searcher) getGenericResourceYAML(namespace, name string) (string, error) {
-	if s.dynamicClient == nil {
-		return "", fmt.Errorf("dynamic client not available")
+	if s.kubeGet == nil {
+		return "", fmt.Errorf("kubeGet client not available")
 	}
 
-	// If we only have kind, try to discover the API version
-	apiVersion := s.apiVersion
 	kind := s.kind
 
-	if apiVersion == "" && kind != "" {
-		var err error
-		apiVersion, kind, s.resourceName, err = s.discoverAPIVersionAndKind()
-		if err != nil {
-			return "", fmt.Errorf("auto-discovery failed: %v", err)
+	// Try the kind as-is first with go-kube-get
+	_, resources, err := s.kubeGet.Get(context.Background(), kind, namespace)
+	if err == nil {
+		// Find the specific resource by name
+		for _, resource := range resources.Items {
+			if resource.GetName() == name {
+				return s.objectToYAML(&resource)
+			}
+		}
+		return "", fmt.Errorf("%s %s not found", s.kind, name)
+	}
+
+	// If that failed and it looks like resource.group format (like datasciencepipelinesapplications.opendatahub.io),
+	// try just the resource name part
+	if strings.Contains(kind, ".") && !strings.Contains(kind, ".v") {
+		parts := strings.Split(kind, ".")
+		if len(parts) >= 2 {
+			resourceName := parts[0]
+			_, resources, err := s.kubeGet.Get(context.Background(), resourceName, namespace)
+			if err == nil {
+				// Find the specific resource by name
+				for _, resource := range resources.Items {
+					if resource.GetName() == name {
+						return s.objectToYAML(&resource)
+					}
+				}
+				return "", fmt.Errorf("%s %s not found", s.kind, name)
+			}
 		}
 	}
 
-	// Parse API version to get group and version
-	var group, version string
-	if strings.Contains(apiVersion, "/") {
-		parts := strings.Split(apiVersion, "/")
-		group = parts[0]
-		version = parts[1]
-	} else {
-		version = apiVersion
-	}
-
-	// Create GVR (GroupVersionResource)
-	resourceName := s.resourceName
-	if resourceName == "" {
-		// Fallback to constructing from kind if resourceName not discovered
-		resourceName = strings.ToLower(kind) + "s"
-	}
-
-	gvr := schema.GroupVersionResource{
-		Group:    group,
-		Version:  version,
-		Resource: resourceName,
-	}
-
-	// Get the dynamic resource interface
-	resourceInterface := s.dynamicClient.Resource(gvr).Namespace(namespace)
-
-	// Get the specific resource
-	obj, err := resourceInterface.Get(context.Background(), name, metav1.GetOptions{})
-	if err != nil {
-		return "", fmt.Errorf("error getting %s %s: %v", kind, name, err)
-	}
-
-	return s.objectToYAML(obj)
+	// Return error if nothing worked
+	return "", fmt.Errorf("error getting %s resources: %v", s.kind, err)
 }
 
 // getPodYAML gets pod YAML.

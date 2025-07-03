@@ -16,7 +16,7 @@ var (
 
 var resourcesCmd = &cobra.Command{
 	Use:   "resources",
-	Short: "Search any Kubernetes resource",
+	Short: "Search Generic Resources in Kubernetes",
 	Long:  `Search the content of any Kubernetes resource for specific patterns within designated namespaces.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if resourcesPattern == "" {
@@ -28,21 +28,31 @@ var resourcesCmd = &cobra.Command{
 		}
 
 		var resourceSearcher *resource.Searcher
+		var err error
 
 		if resourcesAPIVersion != "" {
-			// Use explicit API version and kind
-			resourceSearcher = resource.NewGenericResourceSearcher(resourcesAPIVersion, resourcesKind)
+			resourceSearcher, err = resource.NewGenericResourceSearcher(resourcesAPIVersion, resourcesKind)
+			if err != nil {
+				return fmt.Errorf("failed to create generic resource searcher: %v", err)
+			}
 		} else {
-			// Use auto-discovery for API version
-			resourceSearcher = resource.NewAutoDiscoveryResourceSearcher(resourcesKind)
+			resourceSearcher, err = resource.NewAutoDiscoveryResourceSearcher(resourcesKind)
+			if err != nil {
+				return fmt.Errorf("failed to create auto-discovery resource searcher: %v", err)
+			}
 		}
 
 		var occurrences []resource.Occurrence
-
 		if resourcesNamespace != "" {
-			occurrences = resourceSearcher.Search(resourcesNamespace, resourcesPattern)
+			occurrences, err = resourceSearcher.Search(resourcesNamespace, resourcesPattern)
+			if err != nil {
+				return fmt.Errorf("failed to search resources: %v", err)
+			}
 		} else {
-			occurrences = resourceSearcher.SearchWithoutNamespace(resourcesPattern)
+			occurrences, err = resourceSearcher.SearchWithoutNamespace(resourcesPattern)
+			if err != nil {
+				return fmt.Errorf("failed to search resources: %v", err)
+			}
 		}
 
 		printResourceOccurrences(occurrences, resourcesPattern)

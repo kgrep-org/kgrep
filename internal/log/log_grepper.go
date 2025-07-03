@@ -47,65 +47,58 @@ type Grepper struct {
 }
 
 // NewLogGrepper creates a new LogGrepper with a default configuration.
-func NewLogGrepper() *Grepper {
+func NewLogGrepper() (*Grepper, error) {
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
 	configOverrides := &clientcmd.ConfigOverrides{}
 	config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides).ClientConfig()
 	if err != nil {
-		fmt.Printf("Error creating Kubernetes config: %v\n", err)
-		// Return a grepper that can still function in a limited capacity (e.g., for tests without a real cluster).
-		return &Grepper{}
+		return nil, fmt.Errorf("error creating Kubernetes config: %v", err)
 	}
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		fmt.Printf("Error creating Kubernetes clientset: %v\n", err)
-		return &Grepper{}
+		return nil, fmt.Errorf("error creating Kubernetes clientset: %v", err)
 	}
 
 	return &Grepper{
 		clientset: clientset,
 		config:    config,
 		logReader: &DefaultLogReader{clientset: clientset},
-	}
+	}, nil
 }
 
 // GrepWithoutNamespace searches for a pattern in logs across all pods in the default namespace.
-func (g *Grepper) GrepWithoutNamespace(pattern, sortBy string) []Message {
+func (g *Grepper) GrepWithoutNamespace(pattern, sortBy string) ([]Message, error) {
 	namespace, err := g.getDefaultNamespace()
 	if err != nil {
-		fmt.Printf("Error getting default namespace: %v\n", err)
-		return []Message{}
+		return nil, fmt.Errorf("error getting default namespace: %v", err)
 	}
 	return g.Grep(namespace, "", pattern, sortBy)
 }
 
 // GrepResourceWithoutNamespace searches for a pattern in the logs of a specific resource in the default namespace.
-func (g *Grepper) GrepResourceWithoutNamespace(resource, pattern, sortBy string) []Message {
+func (g *Grepper) GrepResourceWithoutNamespace(resource, pattern, sortBy string) ([]Message, error) {
 	namespace, err := g.getDefaultNamespace()
 	if err != nil {
-		fmt.Printf("Error getting default namespace: %v\n", err)
-		return []Message{}
+		return nil, fmt.Errorf("error getting default namespace: %v", err)
 	}
 	return g.Grep(namespace, resource, pattern, sortBy)
 }
 
 // GrepNamespace searches for a pattern in logs across all pods in a specific namespace.
-func (g *Grepper) GrepNamespace(namespace, pattern, sortBy string) []Message {
+func (g *Grepper) GrepNamespace(namespace, pattern, sortBy string) ([]Message, error) {
 	return g.Grep(namespace, "", pattern, sortBy)
 }
 
 // Grep searches for a pattern in logs of a specific resource in a specific namespace.
-func (g *Grepper) Grep(namespace, resource, pattern, sortBy string) []Message {
+func (g *Grepper) Grep(namespace, resource, pattern, sortBy string) ([]Message, error) {
 	if g.clientset == nil {
-		fmt.Printf("Error: Kubernetes clientset not available\n")
-		return []Message{}
+		return nil, fmt.Errorf("Kubernetes clientset not available")
 	}
 
 	pods, err := g.getPods(namespace, resource)
 	if err != nil {
-		fmt.Printf("Error getting pods: %v\n", err)
-		return []Message{}
+		return nil, fmt.Errorf("error getting pods: %v", err)
 	}
 
 	var messages []Message
@@ -114,7 +107,7 @@ func (g *Grepper) Grep(namespace, resource, pattern, sortBy string) []Message {
 		messages = append(messages, podMessages...)
 	}
 
-	return g.sortMessages(messages, sortBy)
+	return g.sortMessages(messages, sortBy), nil
 }
 
 // getDefaultNamespace gets the default namespace from kubeconfig.
@@ -172,10 +165,8 @@ func (g *Grepper) searchPodLogs(pod corev1.Pod, pattern string) []Message {
 	containers := g.getContainerNames(pod)
 
 	for _, container := range containers {
-		// Use the injected LogReader
 		logs, err := g.logReader.GetPodLogs(pod.Namespace, pod.Name, container)
 		if err != nil {
-			fmt.Printf("Error getting logs for pod %s container %s: %v\n", pod.Name, container, err)
 			continue
 		}
 
