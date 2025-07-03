@@ -251,7 +251,8 @@ func TestIntegration_LogSearch(t *testing.T) {
 
 	createTestPod(t, clientset)
 
-	time.Sleep(10 * time.Second)
+	err := waitForLogs(clientset, testNamespace, "test-pod", "Application", timeout)
+	require.NoError(t, err, "Failed to retrieve logs within timeout")
 
 	output, err := runKgrepCommand(t, "logs", "-n", testNamespace, "-p", "Application")
 	require.NoError(t, err, "kgrep command failed: %s", output)
