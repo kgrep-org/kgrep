@@ -17,7 +17,10 @@ func printResourceOccurrences(occurrences []resource.Occurrence, pattern string)
 	fmt.Printf("Found %d occurrence(s) of '%s':\n\n", len(occurrences), pattern)
 
 	for _, occurrence := range occurrences {
-		highlightedContent := strings.ReplaceAll(occurrence.Content, pattern, color.RedString(pattern))
-		fmt.Printf("%s:%d: %s\n", occurrence.Resource, occurrence.Line, highlightedContent)
+		boldRed := color.New(color.FgRed).Add(color.Bold)
+
+		highlightedContent := strings.ReplaceAll(occurrence.Content, pattern, boldRed.Sprint(pattern))
+		prefix := color.BlueString("%s[%d]:", occurrence.Resource, occurrence.Line)
+		fmt.Printf("%s %s\n", prefix, highlightedContent)
 	}
 }

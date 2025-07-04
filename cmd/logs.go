@@ -86,13 +86,11 @@ func printLogMessages(messages []log.Message, pattern string) {
 		return
 	}
 
-	blue := "\033[34m"
-	reset := "\033[0m"
-	boldRed := "\033[1;31m"
+	boldRed := color.New(color.FgRed).Add(color.Bold)
 
 	for _, message := range messages {
-		highlightedMessage := strings.ReplaceAll(message.Message, pattern, boldRed+pattern+reset)
-		prefix := fmt.Sprintf("%s%s/%s[%d]:%s", blue, message.PodName, message.ContainerName, message.LineNumber, reset)
+		highlightedMessage := strings.ReplaceAll(message.Message, pattern, boldRed.Sprint(pattern))
+		prefix := color.BlueString("%s/%s[%d]:", message.PodName, message.ContainerName, message.LineNumber)
 		fmt.Printf("%s %s\n", prefix, highlightedMessage)
 	}
 }
