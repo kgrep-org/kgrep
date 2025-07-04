@@ -73,17 +73,13 @@ jobs:
         run: |
           make build-tag-version-windows-amd64 TAG=${{ steps.tag.outputs.tag }}
           mv kgrep-amd64.exe kgrep.exe
-      - name: Create archives
-        run: |
-          tar -czf kgrep-windows-amd64.tar.gz kgrep.exe
-          zip kgrep-windows-amd64.zip kgrep.exe
+      - name: Create archive
+        run: zip kgrep-windows-amd64.zip kgrep.exe
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: kgrep-windows-amd64
-          path: |
-            kgrep-windows-amd64.tar.gz
-            kgrep-windows-amd64.zip
+          path: kgrep-windows-amd64.zip
 
   build-windows-arm64:
     runs-on: ubuntu-latest
@@ -102,17 +98,13 @@ jobs:
         run: |
           make build-tag-version-windows-arm64 TAG=${{ steps.tag.outputs.tag }}
           mv kgrep-arm64.exe kgrep.exe
-      - name: Create archives
-        run: |
-          tar -czf kgrep-windows-arm64.tar.gz kgrep.exe
-          zip kgrep-windows-arm64.zip kgrep.exe
+      - name: Create archive
+        run: zip kgrep-windows-arm64.zip kgrep.exe
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: kgrep-windows-arm64
-          path: |
-            kgrep-windows-arm64.tar.gz
-            kgrep-windows-arm64.zip
+          path: kgrep-windows-arm64.zip
 
   build-macos-amd64:
     runs-on: macos-latest
@@ -177,9 +169,7 @@ jobs:
           files: |
             kgrep-linux-amd64/kgrep-linux-amd64.tar.gz
             kgrep-linux-arm64/kgrep-linux-arm64.tar.gz
-            kgrep-windows-amd64/kgrep-windows-amd64.tar.gz
             kgrep-windows-amd64/kgrep-windows-amd64.zip
-            kgrep-windows-arm64/kgrep-windows-arm64.tar.gz
             kgrep-windows-arm64/kgrep-windows-arm64.zip
             kgrep-macos-amd64/kgrep-macos-amd64.tar.gz
             kgrep-macos-arm64/kgrep-macos-arm64.tar.gz
