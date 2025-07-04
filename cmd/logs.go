@@ -21,6 +21,8 @@ var logsCmd = &cobra.Command{
 	Short: "Search logs in Kubernetes",
 	Long:  `Search logs from a group of pods or entire namespaces, filtering by custom patterns.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// For runtime errors, we don't want to show usage
+		cmd.SilenceUsage = true
 		color.NoColor = false // Force color output
 
 		if logsPattern == "" {
