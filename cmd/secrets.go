@@ -18,6 +18,8 @@ var secretsCmd = &cobra.Command{
 	Short: "Search Secrets in Kubernetes",
 	Long:  `Search the content of Secrets for specific patterns within designated namespaces.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// For runtime errors, we don't want to show usage
+		cmd.SilenceUsage = true
 		color.NoColor = false // Force color output
 
 		if secretsPattern == "" {

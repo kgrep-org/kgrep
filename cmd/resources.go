@@ -19,13 +19,8 @@ var resourcesCmd = &cobra.Command{
 	Short: "Search Generic Resources in Kubernetes",
 	Long:  `Search the content of any Kubernetes resource for specific patterns within designated namespaces.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if resourcesPattern == "" {
-			return fmt.Errorf("pattern is required")
-		}
-
-		if resourcesKind == "" {
-			return fmt.Errorf("kind is required")
-		}
+		// For runtime errors, we don't want to show usage
+		cmd.SilenceUsage = true
 
 		var resourceSearcher *resource.Searcher
 		var err error

@@ -17,6 +17,8 @@ var podsCmd = &cobra.Command{
 	Short: "Search Pods in Kubernetes",
 	Long:  `Search the content of Pods for specific patterns within designated namespaces.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// For runtime errors, we don't want to show usage
+		cmd.SilenceUsage = true
 		if podsPattern == "" {
 			return fmt.Errorf("pattern is required")
 		}

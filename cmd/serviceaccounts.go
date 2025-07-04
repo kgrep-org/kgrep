@@ -17,6 +17,8 @@ var serviceaccountsCmd = &cobra.Command{
 	Short: "Search ServiceAccounts in Kubernetes",
 	Long:  `Search the content of ServiceAccounts for specific patterns within designated namespaces.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// For runtime errors, we don't want to show usage
+		cmd.SilenceUsage = true
 		if serviceaccountsPattern == "" {
 			return fmt.Errorf("pattern is required")
 		}
