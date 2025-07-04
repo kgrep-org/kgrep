@@ -349,3 +349,154 @@ func TestGetGenericResourceYAML_ErrorHandling(t *testing.T) {
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "kubeGet client not available")
 }
+
+func TestGetGenericResourceNames_ClusterScopedFallback(t *testing.T) {
+	searcher := &Searcher{
+		kind:    "namespace",
+		kubeGet: nil,
+	}
+
+	_, err := searcher.getGenericResourceNames("some-namespace")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "kubeGet client not available")
+}
+
+func TestGetGenericResourceYAML_ClusterScopedFallback(t *testing.T) {
+	searcher := &Searcher{
+		kind:    "namespace",
+		kubeGet: nil,
+	}
+
+	_, err := searcher.getGenericResourceYAML("some-namespace", "some-name")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "kubeGet client not available")
+}
+
+func TestGetResources_KindBasedRouting(t *testing.T) {
+	clientset := fake.NewClientset()
+
+	testCases := []struct {
+		name     string
+		kind     string
+		expected string
+	}{
+		{
+			name:     "Pod routing",
+			kind:     "pod",
+			expected: "pods",
+		},
+		{
+			name:     "ConfigMap routing",
+			kind:     "configmap",
+			expected: "configmaps",
+		},
+		{
+			name:     "Secret routing",
+			kind:     "secret",
+			expected: "secrets",
+		},
+		{
+			name:     "ServiceAccount routing",
+			kind:     "serviceaccount",
+			expected: "serviceaccounts",
+		},
+		{
+			name:     "Unknown kind fallback",
+			kind:     "namespace",
+			expected: "generic",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			searcher := &Searcher{
+				clientset:  clientset,
+				kind:       tc.kind,
+				apiVersion: "",
+			}
+
+			names, err := searcher.getResources("default")
+			if tc.expected == "generic" {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), "kubeGet client not available")
+			} else {
+				assert.NoError(t, err)
+				assert.Empty(t, names)
+			}
+		})
+	}
+}
+
+func TestGetResourceYAML_KindBasedRouting(t *testing.T) {
+	clientset := fake.NewClientset()
+
+	testCases := []struct {
+		name     string
+		kind     string
+		expected string
+	}{
+		{
+			name:     "Pod YAML routing",
+			kind:     "pod",
+			expected: "pods",
+		},
+		{
+			name:     "ConfigMap YAML routing",
+			kind:     "configmap",
+			expected: "configmaps",
+		},
+		{
+			name:     "Secret YAML routing",
+			kind:     "secret",
+			expected: "secrets",
+		},
+		{
+			name:     "ServiceAccount YAML routing",
+			kind:     "serviceaccount",
+			expected: "serviceaccounts",
+		},
+		{
+			name:     "Unknown kind YAML fallback",
+			kind:     "namespace",
+			expected: "generic",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			searcher := &Searcher{
+				clientset:  clientset,
+				kind:       tc.kind,
+				apiVersion: "",
+			}
+
+			_, err := searcher.getResourceYAML("default", "test-resource")
+			if tc.expected == "generic" {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), "kubeGet client not available")
+			} else {
+				assert.Error(t, err)
+				assert.NotContains(t, err.Error(), "kubeGet client not available")
+			}
+		})
+	}
+}
+
+func TestSearcher_APIVersionAndKindPrecedence(t *testing.T) {
+	clientset := fake.NewClientset()
+
+	searcher := &Searcher{
+		clientset:  clientset,
+		apiVersion: "v1",
+		kind:       "Pod",
+		kubeGet:    nil,
+	}
+
+	_, err := searcher.getResources("default")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "kubeGet client not available")
+
+	_, err = searcher.getResourceYAML("default", "test-resource")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "kubeGet client not available")
+}

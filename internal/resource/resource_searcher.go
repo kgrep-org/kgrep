@@ -317,6 +317,18 @@ func (s *Searcher) getGenericResourceNames(namespace string) ([]string, error) {
 		return names, nil
 	}
 
+	// If that failed, try with empty namespace (for cluster-scoped resources)
+	if namespace != "" {
+		_, resources, err := s.kubeGet.Get(context.Background(), kind, "")
+		if err == nil {
+			var names []string
+			for _, resource := range resources.Items {
+				names = append(names, resource.GetName())
+			}
+			return names, nil
+		}
+	}
+
 	// If that failed and it looks like resource.group format (like datasciencepipelinesapplications.opendatahub.io),
 	// try just the resource name part
 	if strings.Contains(kind, ".") && !strings.Contains(kind, ".v") {
@@ -331,10 +343,20 @@ func (s *Searcher) getGenericResourceNames(namespace string) ([]string, error) {
 				}
 				return names, nil
 			}
+			// Try with empty namespace for cluster-scoped resources
+			if namespace != "" {
+				_, resources, err := s.kubeGet.Get(context.Background(), resourceName, "")
+				if err == nil {
+					var names []string
+					for _, resource := range resources.Items {
+						names = append(names, resource.GetName())
+					}
+					return names, nil
+				}
+			}
 		}
 	}
 
-	// Return the original error if nothing worked
 	return nil, fmt.Errorf("error getting %s resources: %v", s.kind, err)
 }
 
@@ -397,6 +419,20 @@ func (s *Searcher) getGenericResourceYAML(namespace, name string) (string, error
 		return "", fmt.Errorf("%s %s not found", s.kind, name)
 	}
 
+	// If that failed, try with empty namespace (for cluster-scoped resources)
+	if namespace != "" {
+		_, resources, err := s.kubeGet.Get(context.Background(), kind, "")
+		if err == nil {
+			// Find the specific resource by name
+			for _, resource := range resources.Items {
+				if resource.GetName() == name {
+					return s.objectToYAML(&resource)
+				}
+			}
+			return "", fmt.Errorf("%s %s not found", s.kind, name)
+		}
+	}
+
 	// If that failed and it looks like resource.group format (like datasciencepipelinesapplications.opendatahub.io),
 	// try just the resource name part
 	if strings.Contains(kind, ".") && !strings.Contains(kind, ".v") {
@@ -413,10 +449,22 @@ func (s *Searcher) getGenericResourceYAML(namespace, name string) (string, error
 				}
 				return "", fmt.Errorf("%s %s not found", s.kind, name)
 			}
+			// Try with empty namespace for cluster-scoped resources
+			if namespace != "" {
+				_, resources, err := s.kubeGet.Get(context.Background(), resourceName, "")
+				if err == nil {
+					// Find the specific resource by name
+					for _, resource := range resources.Items {
+						if resource.GetName() == name {
+							return s.objectToYAML(&resource)
+						}
+					}
+					return "", fmt.Errorf("%s %s not found", s.kind, name)
+				}
+			}
 		}
 	}
 
-	// Return error if nothing worked
 	return "", fmt.Errorf("error getting %s resources: %v", s.kind, err)
 }
 
