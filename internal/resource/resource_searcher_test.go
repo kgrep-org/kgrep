@@ -32,6 +32,28 @@ func TestResourceSearcher_SearchWithNamespace(t *testing.T) {
 	assert.Contains(t, err.Error(), "kubeGet client not available")
 }
 
+func TestResourceSearcher_SearchAllNamespaces(t *testing.T) {
+	clientset := fake.NewClientset()
+	searcher := &Searcher{
+		clientset:    clientset,
+		resourceType: "pods",
+	}
+
+	_, err := searcher.SearchAllNamespaces("test")
+	// Should succeed in getting namespaces but fail on kubeGet
+	assert.NoError(t, err)
+}
+
+func TestResourceSearcher_SearchAllNamespaces_NoClientset(t *testing.T) {
+	searcher := &Searcher{
+		resourceType: "pods",
+	}
+
+	_, err := searcher.SearchAllNamespaces("test")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "Kubernetes clientset not available")
+}
+
 func TestGetDefaultNamespace(t *testing.T) {
 	searcher := &Searcher{}
 	namespace, err := searcher.getDefaultNamespace()
@@ -42,12 +64,14 @@ func TestGetDefaultNamespace(t *testing.T) {
 
 func TestResourceOccurrence(t *testing.T) {
 	occurrence := Occurrence{
-		Resource: "test-pod",
-		Line:     10,
-		Content:  "test content",
+		Resource:  "test-pod",
+		Namespace: "test-namespace",
+		Line:      10,
+		Content:   "test content",
 	}
 
 	assert.Equal(t, "test-pod", occurrence.Resource)
+	assert.Equal(t, "test-namespace", occurrence.Namespace)
 	assert.Equal(t, 10, occurrence.Line)
 	assert.Equal(t, "test content", occurrence.Content)
 }
@@ -71,7 +95,7 @@ func TestDiscoverAPIVersionAndKind_NoClientset(t *testing.T) {
 	searcher := &Searcher{kind: "Pod"}
 	_, _, _, err := searcher.discoverAPIVersionAndKind()
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "kubernetes clientset not available")
+	assert.Contains(t, err.Error(), "Kubernetes clientset not available")
 }
 
 func TestDiscoverAPIVersionAndKind_WithFakeClientset(t *testing.T) {
