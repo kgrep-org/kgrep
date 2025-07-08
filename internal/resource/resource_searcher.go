@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -161,6 +162,30 @@ func (s *Searcher) Search(namespace, pattern string) ([]Occurrence, error) {
 	return occurrences, nil
 }
 
+// SearchAllNamespaces searches for a pattern in resources across all namespaces.
+func (s *Searcher) SearchAllNamespaces(pattern string) ([]Occurrence, error) {
+	if s.clientset == nil {
+		return nil, fmt.Errorf("Kubernetes clientset not available")
+	}
+
+	namespaces, err := s.getAllNamespaces()
+	if err != nil {
+		return nil, fmt.Errorf("error getting namespaces: %v", err)
+	}
+
+	var allOccurrences []Occurrence
+	for _, namespace := range namespaces {
+		occurrences, err := s.Search(namespace, pattern)
+		if err != nil {
+			// Continue searching other namespaces even if one fails
+			continue
+		}
+		allOccurrences = append(allOccurrences, occurrences...)
+	}
+
+	return allOccurrences, nil
+}
+
 // searchResource searches for a pattern in a specific resource.
 func (s *Searcher) searchResource(namespace, resource, pattern string) []Occurrence {
 	yaml, err := s.getGenericResourceYAML(namespace, resource)
@@ -173,9 +198,10 @@ func (s *Searcher) searchResource(namespace, resource, pattern string) []Occurre
 	for i, line := range lines {
 		if strings.Contains(strings.ToLower(line), strings.ToLower(pattern)) {
 			occurrences = append(occurrences, Occurrence{
-				Resource: resource,
-				Line:     i + 1,
-				Content:  line,
+				Resource:  resource,
+				Namespace: namespace,
+				Line:      i + 1,
+				Content:   line,
 			})
 		}
 	}
@@ -202,6 +228,25 @@ func (s *Searcher) getDefaultNamespace() (string, error) {
 		namespace = "default"
 	}
 	return namespace, nil
+}
+
+// getAllNamespaces gets all namespaces in the cluster.
+func (s *Searcher) getAllNamespaces() ([]string, error) {
+	if s.clientset == nil {
+		return nil, fmt.Errorf("Kubernetes clientset not available")
+	}
+
+	namespaces, err := s.clientset.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("error listing namespaces: %v", err)
+	}
+
+	var namespaceNames []string
+	for _, namespace := range namespaces.Items {
+		namespaceNames = append(namespaceNames, namespace.Name)
+	}
+
+	return namespaceNames, nil
 }
 
 // getGenericResourceNames gets resource names for generic resources.
@@ -333,7 +378,7 @@ func (s *Searcher) objectToYAML(obj runtime.Object) (string, error) {
 // discoverAPIVersionAndKind discovers the API version, correct kind, and resource name for a given kind name.
 func (s *Searcher) discoverAPIVersionAndKind() (string, string, string, error) {
 	if s.clientset == nil {
-		return "", "", "", fmt.Errorf("kubernetes clientset not available")
+		return "", "", "", fmt.Errorf("Kubernetes clientset not available")
 	}
 
 	apiGroups, err := s.clientset.Discovery().ServerGroups()

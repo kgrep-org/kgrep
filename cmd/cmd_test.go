@@ -8,7 +8,36 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func resetFlags() {
+	resourcesKind = ""
+	resourcesNamespace = ""
+	resourcesPattern = ""
+	resourcesAllNamespaces = false
+
+	podsNamespace = ""
+	podsPattern = ""
+	podsAllNamespaces = false
+
+	configmapsNamespace = ""
+	configmapsPattern = ""
+	configmapsAllNamespaces = false
+
+	secretsNamespace = ""
+	secretsPattern = ""
+	secretsAllNamespaces = false
+
+	serviceaccountsNamespace = ""
+	serviceaccountsPattern = ""
+	serviceaccountsAllNamespaces = false
+
+	logsNamespace = ""
+	logsResource = ""
+	logsPattern = ""
+	logsSortBy = ""
+}
+
 func executeCommand(root *cobra.Command, args ...string) (output string, err error) {
+	resetFlags()
 	buf := new(bytes.Buffer)
 	root.SetOut(buf)
 	root.SetErr(buf)
@@ -199,10 +228,6 @@ func TestResourcesCommand_RuntimeError_NoUsage(t *testing.T) {
 }
 
 func TestPodsCommand_RuntimeError_NoUsage(t *testing.T) {
-	// Test that pods command with correct syntax but runtime error doesn't show usage
-	// Since providing a non-existent namespace might not always cause an error,
-	// we'll test that SilenceUsage is properly set by checking the behavior
-	// when there's no actual error (successful execution should not show usage either)
 	output, err := executeCommand(rootCmd, "pods", "--pattern", "test", "--namespace", "non-existent-namespace")
 
 	// Whether there's an error or not, usage should not be shown for correct syntax
@@ -221,7 +246,6 @@ func TestPodsCommand_RuntimeError_NoUsage(t *testing.T) {
 }
 
 func TestConfigMapsCommand_RuntimeError_NoUsage(t *testing.T) {
-	// Test that configmaps command with correct syntax doesn't show usage
 	output, err := executeCommand(rootCmd, "configmaps", "--pattern", "test", "--namespace", "non-existent-namespace")
 
 	// Whether there's an error or not, usage should not be shown for correct syntax
@@ -240,7 +264,6 @@ func TestConfigMapsCommand_RuntimeError_NoUsage(t *testing.T) {
 }
 
 func TestSecretsCommand_RuntimeError_NoUsage(t *testing.T) {
-	// Test that secrets command with correct syntax doesn't show usage
 	output, err := executeCommand(rootCmd, "secrets", "--pattern", "test", "--namespace", "non-existent-namespace")
 
 	// Whether there's an error or not, usage should not be shown for correct syntax
@@ -259,7 +282,6 @@ func TestSecretsCommand_RuntimeError_NoUsage(t *testing.T) {
 }
 
 func TestServiceAccountsCommand_RuntimeError_NoUsage(t *testing.T) {
-	// Test that serviceaccounts command with correct syntax doesn't show usage
 	output, err := executeCommand(rootCmd, "serviceaccounts", "--pattern", "test", "--namespace", "non-existent-namespace")
 
 	// Whether there's an error or not, usage should not be shown for correct syntax
@@ -278,7 +300,6 @@ func TestServiceAccountsCommand_RuntimeError_NoUsage(t *testing.T) {
 }
 
 func TestLogsCommand_RuntimeError_NoUsage(t *testing.T) {
-	// Test that logs command with correct syntax doesn't show usage
 	output, err := executeCommand(rootCmd, "logs", "--pattern", "test", "--namespace", "non-existent-namespace")
 
 	// Whether there's an error or not, usage should not be shown for correct syntax
@@ -293,5 +314,75 @@ func TestLogsCommand_RuntimeError_NoUsage(t *testing.T) {
 	// If there is an error, it should be a runtime error, not a syntax error
 	if err != nil && strings.Contains(err.Error(), "required flag") {
 		t.Errorf("Unexpected syntax error for command with correct syntax: %v", err)
+	}
+}
+
+func TestAllNamespacesFlagValidation_Pods(t *testing.T) {
+	output, err := executeCommand(rootCmd, "pods", "--pattern", "test", "--namespace", "test-ns", "--all-namespaces")
+	if err == nil {
+		t.Errorf("Expected error when using both --namespace and --all-namespaces flags")
+	}
+
+	if !strings.Contains(output, "--all-namespaces and --namespace cannot be used together") {
+		t.Errorf("Expected mutual exclusion error message, got: %s", output)
+	}
+}
+
+func TestAllNamespacesFlagValidation_ConfigMaps(t *testing.T) {
+	output, err := executeCommand(rootCmd, "configmaps", "--pattern", "test", "--namespace", "test-ns", "--all-namespaces")
+	if err == nil {
+		t.Errorf("Expected error when using both --namespace and --all-namespaces flags")
+	}
+
+	if !strings.Contains(output, "--all-namespaces and --namespace cannot be used together") {
+		t.Errorf("Expected mutual exclusion error message, got: %s", output)
+	}
+}
+
+func TestAllNamespacesFlagValidation_Secrets(t *testing.T) {
+	output, err := executeCommand(rootCmd, "secrets", "--pattern", "test", "--namespace", "test-ns", "--all-namespaces")
+	if err == nil {
+		t.Errorf("Expected error when using both --namespace and --all-namespaces flags")
+	}
+
+	if !strings.Contains(output, "--all-namespaces and --namespace cannot be used together") {
+		t.Errorf("Expected mutual exclusion error message, got: %s", output)
+	}
+}
+
+func TestAllNamespacesFlagValidation_ServiceAccounts(t *testing.T) {
+	output, err := executeCommand(rootCmd, "serviceaccounts", "--pattern", "test", "--namespace", "test-ns", "--all-namespaces")
+	if err == nil {
+		t.Errorf("Expected error when using both --namespace and --all-namespaces flags")
+	}
+
+	if !strings.Contains(output, "--all-namespaces and --namespace cannot be used together") {
+		t.Errorf("Expected mutual exclusion error message, got: %s", output)
+	}
+}
+
+func TestAllNamespacesFlagValidation_Resources(t *testing.T) {
+	output, err := executeCommand(rootCmd, "resources", "--kind", "Pod", "--pattern", "test", "--namespace", "test-ns", "--all-namespaces")
+	if err == nil {
+		t.Errorf("Expected error when using both --namespace and --all-namespaces flags")
+	}
+
+	if !strings.Contains(output, "--all-namespaces and --namespace cannot be used together") {
+		t.Errorf("Expected mutual exclusion error message, got: %s", output)
+	}
+}
+
+func TestAllNamespacesFlagAccepted_Pods(t *testing.T) {
+	output, err := executeCommand(rootCmd, "pods", "--pattern", "test", "--all-namespaces")
+
+	// We don't expect a flag validation error, though the command may fail for other reasons (like kubeconfig)
+	if err != nil && strings.Contains(err.Error(), "--all-namespaces and --namespace cannot be used together") {
+		t.Errorf("Unexpected flag validation error when using only --all-namespaces: %v, output: %s", err, output)
+	}
+
+	// Any other errors are acceptable (like kubeconfig issues)
+	t.Logf("Command output: %s", output)
+	if err != nil {
+		t.Logf("Expected error for kubeconfig/connectivity issues: %v", err)
 	}
 }

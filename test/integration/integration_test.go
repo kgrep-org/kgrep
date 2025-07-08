@@ -821,3 +821,360 @@ func TestIntegration_ClusterScopedVsNamespacedBehavior(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Contains(t, output, "No occurrences", "Should not find pod from test namespace when searching in default namespace")
 }
+
+func TestIntegration_AllNamespaces_ConfigMaps(t *testing.T) {
+	clientset := setupKubernetesClient(t)
+	namespace1 := getTestNamespace(t)
+	namespace2 := getTestNamespace(t)
+
+	createTestNamespace(t, clientset, namespace1)
+	createTestNamespace(t, clientset, namespace2)
+	defer func() {
+		cleanupTestNamespace(t, clientset, namespace1)
+		cleanupTestNamespace(t, clientset, namespace2)
+	}()
+
+	configMap1 := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-config-1",
+			Namespace: namespace1,
+		},
+		Data: map[string]string{
+			"config": "shared-pattern-in-config",
+		},
+	}
+
+	configMap2 := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-config-2",
+			Namespace: namespace2,
+		},
+		Data: map[string]string{
+			"config": "shared-pattern-in-config",
+		},
+	}
+
+	_, err := clientset.CoreV1().ConfigMaps(namespace1).Create(context.Background(), configMap1, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	_, err = clientset.CoreV1().ConfigMaps(namespace2).Create(context.Background(), configMap2, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	output, err := runKgrepCommand(t, "configmaps", "--all-namespaces", "-p", "shared-pattern-in-config")
+	require.NoError(t, err, "kgrep command failed: %s", output)
+
+	assert.Contains(t, output, "test-config-1")
+	assert.Contains(t, output, "test-config-2")
+	assert.Contains(t, output, namespace1)
+	assert.Contains(t, output, namespace2)
+	assert.Contains(t, output, "shared-pattern-in-config")
+	t.Logf("All namespaces ConfigMap search output: %s", output)
+}
+
+func TestIntegration_AllNamespaces_Secrets(t *testing.T) {
+	clientset := setupKubernetesClient(t)
+	namespace1 := getTestNamespace(t)
+	namespace2 := getTestNamespace(t)
+
+	createTestNamespace(t, clientset, namespace1)
+	createTestNamespace(t, clientset, namespace2)
+	defer func() {
+		cleanupTestNamespace(t, clientset, namespace1)
+		cleanupTestNamespace(t, clientset, namespace2)
+	}()
+
+	secret1 := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-secret-1",
+			Namespace: namespace1,
+			Annotations: map[string]string{
+				"description": "secret-pattern-test",
+				"purpose":     "integration-testing",
+			},
+		},
+		Data: map[string][]byte{
+			"password": []byte("mypassword123"),
+		},
+	}
+
+	secret2 := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-secret-2",
+			Namespace: namespace2,
+			Annotations: map[string]string{
+				"description": "secret-pattern-test",
+				"purpose":     "integration-testing",
+			},
+		},
+		Data: map[string][]byte{
+			"password": []byte("mypassword456"),
+		},
+	}
+
+	_, err := clientset.CoreV1().Secrets(namespace1).Create(context.Background(), secret1, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	_, err = clientset.CoreV1().Secrets(namespace2).Create(context.Background(), secret2, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	output, err := runKgrepCommand(t, "secrets", "--all-namespaces", "-p", "secret-pattern-test")
+	require.NoError(t, err, "kgrep command failed: %s", output)
+
+	assert.Contains(t, output, "test-secret-1")
+	assert.Contains(t, output, "test-secret-2")
+	assert.Contains(t, output, namespace1)
+	assert.Contains(t, output, namespace2)
+	assert.Contains(t, output, "secret-pattern-test")
+	t.Logf("All namespaces Secret search output: %s", output)
+}
+
+func TestIntegration_AllNamespaces_Pods(t *testing.T) {
+	clientset := setupKubernetesClient(t)
+	namespace1 := getTestNamespace(t)
+	namespace2 := getTestNamespace(t)
+
+	createTestNamespace(t, clientset, namespace1)
+	createTestNamespace(t, clientset, namespace2)
+	defer func() {
+		cleanupTestNamespace(t, clientset, namespace1)
+		cleanupTestNamespace(t, clientset, namespace2)
+	}()
+
+	pod1 := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-pod-1",
+			Namespace: namespace1,
+			Labels: map[string]string{
+				"app":     "shared-app-label",
+				"version": "v1.0.0",
+			},
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:    "test-container",
+					Image:   "busybox:latest",
+					Command: []string{"sh", "-c", "sleep 3600"},
+				},
+			},
+			RestartPolicy: corev1.RestartPolicyAlways,
+		},
+	}
+
+	pod2 := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-pod-2",
+			Namespace: namespace2,
+			Labels: map[string]string{
+				"app":     "shared-app-label",
+				"version": "v2.0.0",
+			},
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:    "test-container",
+					Image:   "busybox:latest",
+					Command: []string{"sh", "-c", "sleep 3600"},
+				},
+			},
+			RestartPolicy: corev1.RestartPolicyAlways,
+		},
+	}
+
+	_, err := clientset.CoreV1().Pods(namespace1).Create(context.Background(), pod1, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	_, err = clientset.CoreV1().Pods(namespace2).Create(context.Background(), pod2, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	output, err := runKgrepCommand(t, "pods", "--all-namespaces", "-p", "shared-app-label")
+	require.NoError(t, err, "kgrep command failed: %s", output)
+
+	assert.Contains(t, output, "test-pod-1")
+	assert.Contains(t, output, "test-pod-2")
+	assert.Contains(t, output, namespace1)
+	assert.Contains(t, output, namespace2)
+	assert.Contains(t, output, "shared-app-label")
+	t.Logf("All namespaces Pod search output: %s", output)
+}
+
+func TestIntegration_AllNamespaces_ServiceAccounts(t *testing.T) {
+	clientset := setupKubernetesClient(t)
+	namespace1 := getTestNamespace(t)
+	namespace2 := getTestNamespace(t)
+
+	createTestNamespace(t, clientset, namespace1)
+	createTestNamespace(t, clientset, namespace2)
+	defer func() {
+		cleanupTestNamespace(t, clientset, namespace1)
+		cleanupTestNamespace(t, clientset, namespace2)
+	}()
+
+	sa1 := &corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-service-account-1",
+			Namespace: namespace1,
+			Annotations: map[string]string{
+				"description": "shared-annotation-pattern",
+				"team":        "integration-test",
+			},
+		},
+	}
+
+	sa2 := &corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-service-account-2",
+			Namespace: namespace2,
+			Annotations: map[string]string{
+				"description": "shared-annotation-pattern",
+				"team":        "integration-test",
+			},
+		},
+	}
+
+	_, err := clientset.CoreV1().ServiceAccounts(namespace1).Create(context.Background(), sa1, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	_, err = clientset.CoreV1().ServiceAccounts(namespace2).Create(context.Background(), sa2, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	output, err := runKgrepCommand(t, "serviceaccounts", "--all-namespaces", "-p", "shared-annotation-pattern")
+	require.NoError(t, err, "kgrep command failed: %s", output)
+
+	assert.Contains(t, output, "test-service-account-1")
+	assert.Contains(t, output, "test-service-account-2")
+	assert.Contains(t, output, namespace1)
+	assert.Contains(t, output, namespace2)
+	assert.Contains(t, output, "shared-annotation-pattern")
+	t.Logf("All namespaces ServiceAccount search output: %s", output)
+}
+
+func TestIntegration_AllNamespaces_Resources(t *testing.T) {
+	clientset := setupKubernetesClient(t)
+	namespace1 := getTestNamespace(t)
+	namespace2 := getTestNamespace(t)
+
+	createTestNamespace(t, clientset, namespace1)
+	createTestNamespace(t, clientset, namespace2)
+	defer func() {
+		cleanupTestNamespace(t, clientset, namespace1)
+		cleanupTestNamespace(t, clientset, namespace2)
+	}()
+
+	configMap1 := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-config-generic-1",
+			Namespace: namespace1,
+		},
+		Data: map[string]string{
+			"config": "generic-resource-pattern",
+		},
+	}
+
+	configMap2 := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-config-generic-2",
+			Namespace: namespace2,
+		},
+		Data: map[string]string{
+			"config": "generic-resource-pattern",
+		},
+	}
+
+	_, err := clientset.CoreV1().ConfigMaps(namespace1).Create(context.Background(), configMap1, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	_, err = clientset.CoreV1().ConfigMaps(namespace2).Create(context.Background(), configMap2, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	output, err := runKgrepCommand(t, "resources", "--kind", "ConfigMap", "--all-namespaces", "-p", "generic-resource-pattern")
+	require.NoError(t, err, "kgrep command failed: %s", output)
+
+	assert.Contains(t, output, "test-config-generic-1")
+	assert.Contains(t, output, "test-config-generic-2")
+	assert.Contains(t, output, namespace1)
+	assert.Contains(t, output, namespace2)
+	assert.Contains(t, output, "generic-resource-pattern")
+	t.Logf("All namespaces generic resource search output: %s", output)
+}
+
+func TestIntegration_AllNamespaces_FlagValidation(t *testing.T) {
+	tests := []struct {
+		name     string
+		cmd      []string
+		expected string
+	}{
+		{
+			name:     "Pods mutual exclusion",
+			cmd:      []string{"pods", "--namespace", "test-ns", "--all-namespaces", "-p", "test"},
+			expected: "--all-namespaces and --namespace cannot be used together",
+		},
+		{
+			name:     "ConfigMaps mutual exclusion",
+			cmd:      []string{"configmaps", "--namespace", "test-ns", "--all-namespaces", "-p", "test"},
+			expected: "--all-namespaces and --namespace cannot be used together",
+		},
+		{
+			name:     "Secrets mutual exclusion",
+			cmd:      []string{"secrets", "--namespace", "test-ns", "--all-namespaces", "-p", "test"},
+			expected: "--all-namespaces and --namespace cannot be used together",
+		},
+		{
+			name:     "ServiceAccounts mutual exclusion",
+			cmd:      []string{"serviceaccounts", "--namespace", "test-ns", "--all-namespaces", "-p", "test"},
+			expected: "--all-namespaces and --namespace cannot be used together",
+		},
+		{
+			name:     "Resources mutual exclusion",
+			cmd:      []string{"resources", "--kind", "Pod", "--namespace", "test-ns", "--all-namespaces", "-p", "test"},
+			expected: "--all-namespaces and --namespace cannot be used together",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			output, err := runKgrepCommand(t, tt.cmd...)
+			assert.Error(t, err, "Expected error for mutual exclusion")
+			assert.Contains(t, output, tt.expected)
+			t.Logf("%s validation output: %s", tt.name, output)
+		})
+	}
+}
+
+func TestIntegration_AllNamespaces_NoResults(t *testing.T) {
+	clientset := setupKubernetesClient(t)
+	namespace1 := getTestNamespace(t)
+	namespace2 := getTestNamespace(t)
+
+	createTestNamespace(t, clientset, namespace1)
+	createTestNamespace(t, clientset, namespace2)
+	defer func() {
+		cleanupTestNamespace(t, clientset, namespace1)
+		cleanupTestNamespace(t, clientset, namespace2)
+	}()
+
+	createTestConfigMap(t, clientset, namespace1)
+	createTestSecret(t, clientset, namespace2)
+
+	output, err := runKgrepCommand(t, "configmaps", "--all-namespaces", "-p", "non-existent-pattern")
+	require.NoError(t, err, "kgrep command failed: %s", output)
+	assert.Contains(t, output, "No occurrences of 'non-existent-pattern' found")
+	t.Logf("All namespaces no results output: %s", output)
+}
+
+func TestIntegration_AllNamespaces_NamespaceDisplayFormat(t *testing.T) {
+	clientset := setupKubernetesClient(t)
+	testNamespace := getTestNamespace(t)
+
+	createTestNamespace(t, clientset, testNamespace)
+	defer cleanupTestNamespace(t, clientset, testNamespace)
+
+	createTestConfigMap(t, clientset, testNamespace)
+
+	output, err := runKgrepCommand(t, "configmaps", "--all-namespaces", "-p", "my-test-app")
+	require.NoError(t, err, "kgrep command failed: %s", output)
+
+	assert.Contains(t, output, fmt.Sprintf("%s/test-config", testNamespace))
+	t.Logf("All namespaces namespace display format output: %s", output)
+}

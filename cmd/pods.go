@@ -8,8 +8,9 @@ import (
 )
 
 var (
-	podsNamespace string
-	podsPattern   string
+	podsNamespace     string
+	podsPattern       string
+	podsAllNamespaces bool
 )
 
 var podsCmd = &cobra.Command{
@@ -23,13 +24,22 @@ var podsCmd = &cobra.Command{
 			return fmt.Errorf("pattern is required")
 		}
 
+		if podsAllNamespaces && podsNamespace != "" {
+			return fmt.Errorf("--all-namespaces and --namespace cannot be used together")
+		}
+
 		resourceSearcher, err := resource.NewResourceSearcher("pods")
 		if err != nil {
 			return fmt.Errorf("failed to create resource searcher: %v", err)
 		}
 
 		var occurrences []resource.Occurrence
-		if podsNamespace != "" {
+		if podsAllNamespaces {
+			occurrences, err = resourceSearcher.SearchAllNamespaces(podsPattern)
+			if err != nil {
+				return fmt.Errorf("failed to search pods: %v", err)
+			}
+		} else if podsNamespace != "" {
 			occurrences, err = resourceSearcher.Search(podsNamespace, podsPattern)
 			if err != nil {
 				return fmt.Errorf("failed to search pods: %v", err)
@@ -52,6 +62,7 @@ func init() {
 
 	podsCmd.Flags().StringVarP(&podsNamespace, "namespace", "n", "", "The Kubernetes namespace")
 	podsCmd.Flags().StringVarP(&podsPattern, "pattern", "p", "", "grep search pattern")
+	podsCmd.Flags().BoolVarP(&podsAllNamespaces, "all-namespaces", "A", false, "If present, list the requested object(s) across all namespaces")
 
 	if err := podsCmd.MarkFlagRequired("pattern"); err != nil {
 		panic(fmt.Sprintf("failed to mark pattern flag as required: %v", err))

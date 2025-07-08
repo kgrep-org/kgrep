@@ -20,7 +20,14 @@ func printResourceOccurrences(occurrences []resource.Occurrence, pattern string)
 		boldRed := color.New(color.FgRed).Add(color.Bold)
 
 		highlightedContent := strings.ReplaceAll(occurrence.Content, pattern, boldRed.Sprint(pattern))
-		prefix := color.BlueString("%s[%d]:", occurrence.Resource, occurrence.Line)
+
+		var prefix string
+		if occurrence.Namespace != "" {
+			prefix = color.BlueString("%s/%s[%d]:", occurrence.Namespace, occurrence.Resource, occurrence.Line)
+		} else {
+			prefix = color.BlueString("%s[%d]:", occurrence.Resource, occurrence.Line)
+		}
+
 		fmt.Printf("%s %s\n", prefix, highlightedContent)
 	}
 }

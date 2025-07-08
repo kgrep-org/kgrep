@@ -8,10 +8,11 @@ import (
 )
 
 var (
-	resourcesNamespace  string
-	resourcesPattern    string
-	resourcesAPIVersion string
-	resourcesKind       string
+	resourcesNamespace     string
+	resourcesPattern       string
+	resourcesAPIVersion    string
+	resourcesKind          string
+	resourcesAllNamespaces bool
 )
 
 var resourcesCmd = &cobra.Command{
@@ -21,6 +22,10 @@ var resourcesCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// For runtime errors, we don't want to show usage
 		cmd.SilenceUsage = true
+
+		if resourcesAllNamespaces && resourcesNamespace != "" {
+			return fmt.Errorf("--all-namespaces and --namespace cannot be used together")
+		}
 
 		var resourceSearcher *resource.Searcher
 		var err error
@@ -38,7 +43,12 @@ var resourcesCmd = &cobra.Command{
 		}
 
 		var occurrences []resource.Occurrence
-		if resourcesNamespace != "" {
+		if resourcesAllNamespaces {
+			occurrences, err = resourceSearcher.SearchAllNamespaces(resourcesPattern)
+			if err != nil {
+				return fmt.Errorf("failed to search resources: %v", err)
+			}
+		} else if resourcesNamespace != "" {
 			occurrences, err = resourceSearcher.Search(resourcesNamespace, resourcesPattern)
 			if err != nil {
 				return fmt.Errorf("failed to search resources: %v", err)
@@ -63,6 +73,7 @@ func init() {
 	resourcesCmd.Flags().StringVarP(&resourcesPattern, "pattern", "p", "", "grep search pattern")
 	resourcesCmd.Flags().StringVar(&resourcesAPIVersion, "api-version", "", "API version (e.g., v1, apps/v1). If not provided, will be auto-discovered.")
 	resourcesCmd.Flags().StringVarP(&resourcesKind, "kind", "k", "", "Resource kind (e.g., Pod, Deployment)")
+	resourcesCmd.Flags().BoolVarP(&resourcesAllNamespaces, "all-namespaces", "A", false, "If present, list the requested object(s) across all namespaces")
 
 	if err := resourcesCmd.MarkFlagRequired("pattern"); err != nil {
 		panic(fmt.Sprintf("failed to mark pattern flag as required: %v", err))
