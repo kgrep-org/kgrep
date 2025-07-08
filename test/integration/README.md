@@ -4,33 +4,7 @@ This directory contains integration tests for kgrep that require a real Kubernet
 
 ## What These Tests Cover
 
-The integration tests cover scenarios that require interaction with a real Kubernetes cluster:
-
-### Core Resource Tests
-1. **End-to-End Resource Searching**: Tests actual resource creation and searching in a real cluster
-2. **Cross-Namespace Operations**: Tests searching across multiple namespaces
-3. **Real Log Aggregation**: Tests log searching from actual running pods
-4. **Resource Type Interactions**: Tests with different Kubernetes resource types (ConfigMaps, Secrets, Pods, ServiceAccounts)
-5. **CLI Command Integration**: Tests the actual kgrep CLI commands against real resources
-6. **Multi-Resource Scenarios**: Tests complex scenarios with multiple resource types
-
-### All-Namespaces Tests
-7. **All-Namespaces ConfigMaps**: Tests --all-namespaces flag with ConfigMap resources across multiple namespaces
-8. **All-Namespaces Secrets**: Tests --all-namespaces flag with Secret resources across multiple namespaces
-9. **All-Namespaces Pods**: Tests --all-namespaces flag with Pod resources across multiple namespaces
-10. **All-Namespaces ServiceAccounts**: Tests --all-namespaces flag with ServiceAccount resources across multiple namespaces
-11. **All-Namespaces Resources**: Tests --all-namespaces flag with generic resource command across multiple namespaces
-12. **All-Namespaces Flag Validation**: Tests mutual exclusion of --all-namespaces and --namespace flags
-13. **All-Namespaces No Results**: Tests --all-namespaces behavior when no results are found
-14. **All-Namespaces Display Format**: Tests that namespace information is properly displayed in output format
-
-### Custom Resource Tests
-15. **Custom Resource Auto-Discovery**: Tests that kgrep can discover and search custom resources without needing `--api-version` flag
-16. **Resource Name Format Compatibility**: Tests the 4 different resource name formats (plural, short name, resource.group, Kind)
-17. **Resource.group Fallback Logic**: Tests fallback when `resource.group` format fails and falls back to just resource name
-18. **kubectl Compatibility**: Verifies that kgrep behaves identically to kubectl for resource discovery
-19. **Custom Resource Error Handling**: Tests meaningful error messages with real API server errors
-20. **Custom Resource Content Search**: Tests searching within different parts of custom resources (spec, status, labels, etc.)
+The integration tests cover scenarios that require interaction with a real Kubernetes cluster.
 
 ## Test Structure
 
@@ -195,15 +169,3 @@ kubectl get testapplications --all-namespaces
 # Clean up manually if needed
 kubectl delete crd testapplications.test.kgrep.io
 ```
-
-## Test Coverage Summary
-
-| Test Category | Tests | Description |
-|---------------|-------|-------------|
-| Core Resources | 7 tests | ConfigMaps, Secrets, Pods, ServiceAccounts, Logs |
-| All-Namespaces | 8 tests | --all-namespaces flag functionality across all resource types |
-| Custom Resources | 6 tests | Auto-discovery, format compatibility, kubectl compatibility |
-| Error Handling | 2 tests | Core resource errors, custom resource errors |
-| Multi-Resource | 2 tests | Multiple resource types, cross-namespace |
-
-**Total**: 25 integration tests covering all major functionality that requires real Kubernetes API interaction.
