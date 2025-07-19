@@ -48,6 +48,23 @@ Searching Kubernetes resources and logs with `kubectl` and `grep` can be tedious
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed and configured to connect to your Kubernetes cluster.
 - Go 1.24+ (for building from source)
 
+### Homebrew (macOS/Linux)
+
+Install `kgrep` using [Homebrew](https://brew.sh):
+
+```sh
+brew tap kgrep-org/kgrep
+brew install kgrep
+```
+
+Or install directly without adding the tap:
+
+```sh
+brew install kgrep-org/kgrep/kgrep
+```
+
+For more information about the Homebrew tap, visit [homebrew-kgrep](https://github.com/kgrep-org/homebrew-kgrep).
+
 ### Download the binary and add it to your PATH
 
 Download a release from https://github.com/hbelmiro/kgrep/releases, uncompress it, and add it to your PATH.
