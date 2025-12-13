@@ -29,7 +29,7 @@ jobs:
       - name: Create archive
         run: tar -czf kgrep-linux-amd64.tar.gz kgrep
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: kgrep-linux-amd64
           path: kgrep-linux-amd64.tar.gz
@@ -54,7 +54,7 @@ jobs:
       - name: Create archive
         run: tar -czf kgrep-linux-arm64.tar.gz kgrep
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: kgrep-linux-arm64
           path: kgrep-linux-arm64.tar.gz
@@ -79,7 +79,7 @@ jobs:
       - name: Create archive
         run: zip kgrep-windows-amd64.zip kgrep.exe
       - name: Upload artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: kgrep-windows-amd64
           path: kgrep-windows-amd64.zip
@@ -104,7 +104,7 @@ jobs:
       - name: Create archive
         run: zip kgrep-windows-arm64.zip kgrep.exe
       - name: Upload artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: kgrep-windows-arm64
           path: kgrep-windows-arm64.zip
@@ -129,7 +129,7 @@ jobs:
       - name: Create archive
         run: tar -czf kgrep-macos-amd64.tar.gz kgrep
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: kgrep-macos-amd64
           path: kgrep-macos-amd64.tar.gz
@@ -154,7 +154,7 @@ jobs:
       - name: Create archive
         run: tar -czf kgrep-macos-arm64.tar.gz kgrep
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: kgrep-macos-arm64
           path: kgrep-macos-arm64.tar.gz
