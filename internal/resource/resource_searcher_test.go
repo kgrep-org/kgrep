@@ -1,10 +1,13 @@
 package resource
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes/fake"
 )
 
@@ -364,4 +367,61 @@ func TestSearcher_APIVersionAndKindPrecedence(t *testing.T) {
 	_, err = searcher.getGenericResourceYAML("default", "test-resource")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "kubeGet client not available")
+}
+
+func TestWrapKubernetesError(t *testing.T) {
+	t.Run("nil error", func(t *testing.T) {
+		assert.Nil(t, WrapKubernetesError(nil))
+	})
+
+	t.Run("unauthorized error", func(t *testing.T) {
+		origErr := errors.NewUnauthorized("unauthorized")
+		wrapped := WrapKubernetesError(origErr)
+		assert.Error(t, wrapped)
+		assert.Contains(t, wrapped.Error(), "you are not authorized to access the cluster")
+		assert.ErrorIs(t, wrapped, origErr)
+	})
+
+	t.Run("forbidden error", func(t *testing.T) {
+		origErr := errors.NewForbidden(schema.GroupResource{}, "name", fmt.Errorf("forbidden"))
+		wrapped := WrapKubernetesError(origErr)
+		assert.Error(t, wrapped)
+		assert.Contains(t, wrapped.Error(), "you do not have permission to perform this action")
+		assert.ErrorIs(t, wrapped, origErr)
+	})
+
+	t.Run("configuration errors", func(t *testing.T) {
+		configErrs := []string{
+			"no configuration has been provided",
+			"unable to load in-cluster configuration",
+			"invalid configuration",
+			"Couldn't find kubeconfig file",
+		}
+
+		for _, msg := range configErrs {
+			t.Run(msg, func(t *testing.T) {
+				origErr := fmt.Errorf("%s", msg)
+				wrapped := WrapKubernetesError(origErr)
+				assert.Error(t, wrapped)
+				assert.Contains(t, wrapped.Error(), "no Kubernetes configuration found")
+				assert.ErrorIs(t, wrapped, origErr)
+			})
+		}
+	})
+
+	t.Run("context preservation", func(t *testing.T) {
+		origErr := errors.NewUnauthorized("unauthorized")
+		contextErr := fmt.Errorf("outer context: %w", origErr)
+		wrapped := WrapKubernetesError(contextErr)
+		assert.Error(t, wrapped)
+		assert.Contains(t, wrapped.Error(), "outer context")
+		assert.Contains(t, wrapped.Error(), "you are not authorized to access the cluster")
+		assert.ErrorIs(t, wrapped, origErr)
+	})
+
+	t.Run("unknown error", func(t *testing.T) {
+		origErr := fmt.Errorf("some random error")
+		wrapped := WrapKubernetesError(origErr)
+		assert.Equal(t, origErr, wrapped)
+	})
 }
