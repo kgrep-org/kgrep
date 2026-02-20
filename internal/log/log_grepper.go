@@ -107,7 +107,7 @@ func (g *Grepper) Grep(namespace, resource, pattern, sortBy string) ([]Message, 
 		messages = append(messages, podMessages...)
 	}
 
-	return g.sortMessages(messages, sortBy), nil
+	return g.SortMessages(messages, sortBy), nil
 }
 
 // getDefaultNamespace gets the default namespace from kubeconfig.
@@ -236,7 +236,7 @@ func (g *Grepper) searchLogs(logs, pattern, podName, containerName string) []Mes
 }
 
 // sortMessages sorts messages based on the sortBy parameter.
-func (g *Grepper) sortMessages(messages []Message, sortBy string) []Message {
+func (g *Grepper) SortMessages(messages []Message, sortBy string) []Message {
 	switch strings.ToUpper(sortBy) {
 	case "MESSAGE":
 		// Sort by message content
