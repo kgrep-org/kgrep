@@ -386,3 +386,18 @@ func TestAllNamespacesFlagAccepted_Pods(t *testing.T) {
 		t.Logf("Expected error for kubeconfig/connectivity issues: %v", err)
 	}
 }
+func TestLogsCommand_MultiNamespace(t *testing.T) {
+	output, err := executeCommand(rootCmd, "logs", "--pattern", "test", "--namespace", "ns1,ns2")
+
+	if err == nil {
+		t.Errorf("Expected error for missing kubeconfig, but got nil")
+	}
+
+	if !strings.Contains(err.Error(), "failed to create log grepper") && !strings.Contains(err.Error(), "failed to search logs in namespace \"ns1\"") {
+		t.Errorf("Expected error to indicate it got past flag validation, got: %v", err)
+	}
+
+	if strings.Contains(output, "Usage:") {
+		t.Errorf("Expected no usage text for correct flag syntax, got: %s", output)
+	}
+}
