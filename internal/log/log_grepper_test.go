@@ -140,6 +140,7 @@ func TestLogGrepper_SearchLogs_EmptyPattern(t *testing.T) {
 	assert.Equal(t, "line 2", messages[1].Message)
 	assert.Equal(t, "line 3", messages[2].Message)
 }
+
 func TestLogGrepper_SortMessages(t *testing.T) {
 	messages := []Message{
 		{PodName: "pod-b", ContainerName: "c1", LineNumber: 10, Message: "zebra"},

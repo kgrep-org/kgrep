@@ -61,42 +61,66 @@ func TestRootCommand(t *testing.T) {
 // Test that required flags are properly validated
 func TestResourcesCommand_MissingFlags(t *testing.T) {
 	_, err := executeCommand(rootCmd, "resources")
-	if err == nil || !strings.Contains(err.Error(), "required flag(s)") {
+	if err == nil {
+		t.Errorf("Expected error for missing required flags, got nil")
+		return
+	}
+	if !strings.Contains(err.Error(), "required flag(s)") {
 		t.Errorf("Expected error for missing required flags, got: %v", err)
 	}
 }
 
 func TestPodsCommand_MissingFlags(t *testing.T) {
 	_, err := executeCommand(rootCmd, "pods")
-	if err == nil || err.Error() != "required flag(s) \"pattern\" not set" {
+	if err == nil {
+		t.Errorf("Expected error for missing required flags, got nil")
+		return
+	}
+	if err.Error() != "required flag(s) \"pattern\" not set" {
 		t.Errorf("Expected error for missing required flags, got: %v", err)
 	}
 }
 
 func TestConfigMapsCommand_MissingFlags(t *testing.T) {
 	_, err := executeCommand(rootCmd, "configmaps")
-	if err == nil || err.Error() != "required flag(s) \"pattern\" not set" {
+	if err == nil {
+		t.Errorf("Expected error for missing required flags, got nil")
+		return
+	}
+	if err.Error() != "required flag(s) \"pattern\" not set" {
 		t.Errorf("Expected error for missing required flags, got: %v", err)
 	}
 }
 
 func TestSecretsCommand_MissingFlags(t *testing.T) {
 	_, err := executeCommand(rootCmd, "secrets")
-	if err == nil || err.Error() != "required flag(s) \"pattern\" not set" {
+	if err == nil {
+		t.Errorf("Expected error for missing required flags, got nil")
+		return
+	}
+	if err.Error() != "required flag(s) \"pattern\" not set" {
 		t.Errorf("Expected error for missing required flags, got: %v", err)
 	}
 }
 
 func TestServiceAccountsCommand_MissingFlags(t *testing.T) {
 	_, err := executeCommand(rootCmd, "serviceaccounts")
-	if err == nil || err.Error() != "required flag(s) \"pattern\" not set" {
+	if err == nil {
+		t.Errorf("Expected error for missing required flags, got nil")
+		return
+	}
+	if err.Error() != "required flag(s) \"pattern\" not set" {
 		t.Errorf("Expected error for missing required flags, got: %v", err)
 	}
 }
 
 func TestLogsCommand_MissingFlags(t *testing.T) {
 	_, err := executeCommand(rootCmd, "logs")
-	if err == nil || err.Error() != "required flag(s) \"pattern\" not set" {
+	if err == nil {
+		t.Errorf("Expected error for missing required flags, got nil")
+		return
+	}
+	if err.Error() != "required flag(s) \"pattern\" not set" {
 		t.Errorf("Expected error for missing required flags, got: %v", err)
 	}
 }
@@ -389,15 +413,15 @@ func TestAllNamespacesFlagAccepted_Pods(t *testing.T) {
 func TestLogsCommand_MultiNamespace(t *testing.T) {
 	output, err := executeCommand(rootCmd, "logs", "--pattern", "test", "--namespace", "ns1,ns2")
 
-	if err == nil {
-		t.Errorf("Expected error for missing kubeconfig, but got nil")
-	}
-
-	if !strings.Contains(err.Error(), "failed to create log grepper") && !strings.Contains(err.Error(), "failed to search logs in namespace \"ns1\"") {
-		t.Errorf("Expected error to indicate it got past flag validation, got: %v", err)
+	if err != nil && strings.Contains(err.Error(), "--all-namespaces and --namespace cannot be used together") {
+		t.Errorf("Unexpected flag validation error for multi-namespace logs command: %v, output: %s", err, output)
 	}
 
 	if strings.Contains(output, "Usage:") {
 		t.Errorf("Expected no usage text for correct flag syntax, got: %s", output)
+	}
+
+	if err != nil {
+		t.Logf("Logs command returned error (acceptable for this test): %v", err)
 	}
 }

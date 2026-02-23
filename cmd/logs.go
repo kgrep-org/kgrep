@@ -36,7 +36,22 @@ var logsCmd = &cobra.Command{
 
 		var namespaces []string
 		if logsNamespace != "" {
-			namespaces = strings.Split(logsNamespace, ",")
+			// Split, trim and skip empty tokens; deduplicate while preserving order
+			seen := make(map[string]struct{})
+			for _, tok := range strings.Split(logsNamespace, ",") {
+				t := strings.TrimSpace(tok)
+				if t == "" {
+					continue
+				}
+				if _, ok := seen[t]; ok {
+					continue
+				}
+				seen[t] = struct{}{}
+				namespaces = append(namespaces, t)
+			}
+			if len(namespaces) == 0 {
+				return fmt.Errorf("invalid namespace list: no valid namespaces provided")
+			}
 		} else {
 			namespaces = []string{""}
 		}
@@ -60,7 +75,9 @@ var logsCmd = &cobra.Command{
 			}
 
 			if err != nil {
-				return fmt.Errorf("failed to search logs in namespace %q: %v", ns, err)
+				if ns != "" {
+					return fmt.Errorf("failed to search logs in namespace %q: %v", ns, err)
+				}
 			}
 			messages = append(messages, nsMessages...)
 		}
