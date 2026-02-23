@@ -11,10 +11,39 @@ import (
 
 var (
 	logsNamespace string
-	logsResource  string
-	logsPattern   string
-	logsSortBy    string
+	logsResource string
+	logsPattern string
+	logsSortBy string
 )
+
+// parseNamespaces parses a comma-separated list of namespaces,
+// trimming whitespace, skipping empty tokens, and deduplicating while preserving order.
+func parseNamespaces(raw string) ([]string, error) {
+	if raw == "" {
+		return []string{""}, nil
+	}
+
+	var namespaces []string
+	seen := make(map[string]struct{})
+
+	for _, tok := range strings.Split(raw, ",") {
+		t := strings.TrimSpace(tok)
+		if t == "" {
+			continue
+		}
+		if _, ok := seen[t]; ok {
+			continue
+		}
+		seen[t] = struct{}{}
+		namespaces = append(namespaces, t)
+	}
+
+	if len(namespaces) == 0 {
+		return nil, fmt.Errorf("invalid namespace list: no valid namespaces provided")
+	}
+
+	return namespaces, nil
+}
 
 var logsCmd = &cobra.Command{
 	Use:   "logs",
@@ -34,16 +63,13 @@ var logsCmd = &cobra.Command{
 			return fmt.Errorf("failed to create log grepper: %v", err)
 		}
 
-		var namespaces []string
-		if logsNamespace != "" {
-			namespaces = strings.Split(logsNamespace, ",")
-		} else {
-			namespaces = []string{""}
+		namespaces, err := parseNamespaces(logsNamespace)
+		if err != nil {
+			return err
 		}
 
 		var messages []log.Message
 		for _, ns := range namespaces {
-			ns = strings.TrimSpace(ns)
 			var nsMessages []log.Message
 			if ns != "" {
 				if logsResource != "" {
@@ -60,7 +86,10 @@ var logsCmd = &cobra.Command{
 			}
 
 			if err != nil {
-				return fmt.Errorf("failed to search logs in namespace %q: %v", ns, err)
+				if ns != "" {
+					return fmt.Errorf("failed to search logs in namespace %q: %v", ns, err)
+				}
+				return fmt.Errorf("failed to search logs: %v", err)
 			}
 			messages = append(messages, nsMessages...)
 		}
