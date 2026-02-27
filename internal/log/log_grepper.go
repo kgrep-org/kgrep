@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 
 	"k8s.io/client-go/kubernetes"
@@ -107,7 +108,7 @@ func (g *Grepper) Grep(namespace, resource, pattern, sortBy string) ([]Message, 
 		messages = append(messages, podMessages...)
 	}
 
-	return g.sortMessages(messages, sortBy), nil
+	return g.SortMessages(messages, sortBy), nil
 }
 
 // getDefaultNamespace gets the default namespace from kubeconfig.
@@ -236,34 +237,30 @@ func (g *Grepper) searchLogs(logs, pattern, podName, containerName string) []Mes
 }
 
 // sortMessages sorts messages based on the sortBy parameter.
-func (g *Grepper) sortMessages(messages []Message, sortBy string) []Message {
+// Supported values (case-insensitive) are:
+//
+//	"MESSAGE"         - sort by message text lexicographically
+//	"POD_AND_CONTAINER" - sort by pod name, then container name, then line number
+//
+// Any other value leaves the slice in its original order.
+func (g *Grepper) SortMessages(messages []Message, sortBy string) []Message {
 	switch strings.ToUpper(sortBy) {
 	case "MESSAGE":
 		// Sort by message content
-		for i := 0; i < len(messages)-1; i++ {
-			for j := i + 1; j < len(messages); j++ {
-				if messages[i].Message > messages[j].Message {
-					messages[i], messages[j] = messages[j], messages[i]
-				}
-			}
-		}
+		sort.Slice(messages, func(i, j int) bool {
+			return messages[i].Message < messages[j].Message
+		})
 	case "POD_AND_CONTAINER":
-		// Default sort: by pod name, then container name, then line number
-		for i := 0; i < len(messages)-1; i++ {
-			for j := i + 1; j < len(messages); j++ {
-				if messages[i].PodName > messages[j].PodName {
-					messages[i], messages[j] = messages[j], messages[i]
-				} else if messages[i].PodName == messages[j].PodName {
-					if messages[i].ContainerName > messages[j].ContainerName {
-						messages[i], messages[j] = messages[j], messages[i]
-					} else if messages[i].ContainerName == messages[j].ContainerName {
-						if messages[i].LineNumber > messages[j].LineNumber {
-							messages[i], messages[j] = messages[j], messages[i]
-						}
-					}
-				}
+		// Sort by pod name, then container name, then line number
+		sort.Slice(messages, func(i, j int) bool {
+			if messages[i].PodName != messages[j].PodName {
+				return messages[i].PodName < messages[j].PodName
 			}
-		}
+			if messages[i].ContainerName != messages[j].ContainerName {
+				return messages[i].ContainerName < messages[j].ContainerName
+			}
+			return messages[i].LineNumber < messages[j].LineNumber
+		})
 	}
 
 	return messages
