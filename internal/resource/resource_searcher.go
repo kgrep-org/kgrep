@@ -35,17 +35,17 @@ func NewResourceSearcher(resourceType string) (*Searcher, error) {
 	configOverrides := &clientcmd.ConfigOverrides{}
 	config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides).ClientConfig()
 	if err != nil {
-		return nil, fmt.Errorf("error creating Kubernetes config: %v", err)
+		return nil, wrapKubernetesError(fmt.Errorf("error creating Kubernetes config: %w", err))
 	}
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return nil, fmt.Errorf("error creating Kubernetes clientset: %v", err)
+		return nil, wrapKubernetesError(fmt.Errorf("error creating Kubernetes clientset: %w", err))
 	}
 
 	dynamicClient, err := dynamic.NewForConfig(config)
 	if err != nil {
-		return nil, fmt.Errorf("error creating dynamic client: %v", err)
+		return nil, wrapKubernetesError(fmt.Errorf("error creating dynamic client: %w", err))
 	}
 
 	kubeGet, err := gokubeget.NewKubeGet(config)
@@ -70,17 +70,17 @@ func NewGenericResourceSearcher(apiVersion, kind string) (*Searcher, error) {
 	configOverrides := &clientcmd.ConfigOverrides{}
 	config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides).ClientConfig()
 	if err != nil {
-		return nil, fmt.Errorf("error creating Kubernetes config: %v", err)
+		return nil, wrapKubernetesError(fmt.Errorf("error creating Kubernetes config: %w", err))
 	}
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return nil, fmt.Errorf("error creating Kubernetes clientset: %v", err)
+		return nil, wrapKubernetesError(fmt.Errorf("error creating Kubernetes clientset: %w", err))
 	}
 
 	dynamicClient, err := dynamic.NewForConfig(config)
 	if err != nil {
-		return nil, fmt.Errorf("error creating dynamic client: %v", err)
+		return nil, wrapKubernetesError(fmt.Errorf("error creating dynamic client: %w", err))
 	}
 
 	kubeGet, err := gokubeget.NewKubeGet(config)
@@ -105,17 +105,17 @@ func NewAutoDiscoveryResourceSearcher(kind string) (*Searcher, error) {
 	configOverrides := &clientcmd.ConfigOverrides{}
 	config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides).ClientConfig()
 	if err != nil {
-		return nil, fmt.Errorf("error creating Kubernetes config: %v", err)
+		return nil, wrapKubernetesError(fmt.Errorf("error creating Kubernetes config: %w", err))
 	}
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return nil, fmt.Errorf("error creating Kubernetes clientset: %v", err)
+		return nil, wrapKubernetesError(fmt.Errorf("error creating Kubernetes clientset: %w", err))
 	}
 
 	dynamicClient, err := dynamic.NewForConfig(config)
 	if err != nil {
-		return nil, fmt.Errorf("error creating dynamic client: %v", err)
+		return nil, wrapKubernetesError(fmt.Errorf("error creating dynamic client: %w", err))
 	}
 
 	kubeGet, err := gokubeget.NewKubeGet(config)
@@ -137,7 +137,7 @@ func NewAutoDiscoveryResourceSearcher(kind string) (*Searcher, error) {
 func (s *Searcher) SearchWithoutNamespace(pattern string) ([]Occurrence, error) {
 	namespace, err := s.getDefaultNamespace()
 	if err != nil {
-		return nil, fmt.Errorf("error getting default namespace: %v", err)
+		return nil, wrapKubernetesError(fmt.Errorf("error getting default namespace: %w", err))
 	}
 	return s.Search(namespace, pattern)
 }
@@ -150,7 +150,7 @@ func (s *Searcher) Search(namespace, pattern string) ([]Occurrence, error) {
 
 	resources, err := s.getGenericResourceNames(namespace)
 	if err != nil {
-		return nil, fmt.Errorf("error getting resources: %v", err)
+		return nil, wrapKubernetesError(fmt.Errorf("error getting resources: %w", err))
 	}
 
 	var occurrences []Occurrence
@@ -170,7 +170,7 @@ func (s *Searcher) SearchAllNamespaces(pattern string) ([]Occurrence, error) {
 
 	namespaces, err := s.getAllNamespaces()
 	if err != nil {
-		return nil, fmt.Errorf("error getting namespaces: %v", err)
+		return nil, wrapKubernetesError(fmt.Errorf("error getting namespaces: %w", err))
 	}
 
 	var allOccurrences []Occurrence
@@ -238,7 +238,7 @@ func (s *Searcher) getAllNamespaces() ([]string, error) {
 
 	namespaces, err := s.clientset.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("error listing namespaces: %v", err)
+		return nil, wrapKubernetesError(fmt.Errorf("error listing namespaces: %w", err))
 	}
 
 	var namespaceNames []string
@@ -302,7 +302,7 @@ func (s *Searcher) getGenericResourceNames(namespace string) ([]string, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("error getting %s resources: %v", s.kind, err)
+	return nil, wrapKubernetesError(fmt.Errorf("error getting %s resources: %w", s.kind, err))
 }
 
 // getGenericResourceYAML gets YAML for generic resources.
@@ -362,7 +362,7 @@ func (s *Searcher) getGenericResourceYAML(namespace, name string) (string, error
 		}
 	}
 
-	return "", fmt.Errorf("error getting %s resources: %v", s.kind, err)
+	return "", wrapKubernetesError(fmt.Errorf("error getting %s resources: %w", s.kind, err))
 }
 
 // objectToYAML converts a runtime.Object to YAML string.
@@ -383,7 +383,7 @@ func (s *Searcher) discoverAPIVersionAndKind() (string, string, string, error) {
 
 	apiGroups, err := s.clientset.Discovery().ServerGroups()
 	if err != nil {
-		return "", "", "", fmt.Errorf("error getting API groups: %v", err)
+		return "", "", "", wrapKubernetesError(fmt.Errorf("error getting API groups: %w", err))
 	}
 
 	for _, group := range apiGroups.Groups {
