@@ -8,11 +8,12 @@ import (
 )
 
 var (
-	resourcesNamespace     string
-	resourcesPattern       string
-	resourcesAPIVersion    string
-	resourcesKind          string
+	resourcesNamespace string
+	resourcesPattern string
+	resourcesAPIVersion string
+	resourcesKind string
 	resourcesAllNamespaces bool
+	resourcesOutputFormat string
 )
 
 var resourcesCmd = &cobra.Command{
@@ -60,6 +61,7 @@ var resourcesCmd = &cobra.Command{
 			}
 		}
 
+		outputFormat = resourcesOutputFormat
 		printResourceOccurrences(occurrences, resourcesPattern)
 
 		return nil
@@ -74,6 +76,7 @@ func init() {
 	resourcesCmd.Flags().StringVar(&resourcesAPIVersion, "api-version", "", "API version (e.g., v1, apps/v1). If not provided, will be auto-discovered.")
 	resourcesCmd.Flags().StringVarP(&resourcesKind, "kind", "k", "", "Resource kind (e.g., Pod, Deployment)")
 	resourcesCmd.Flags().BoolVarP(&resourcesAllNamespaces, "all-namespaces", "A", false, "If present, list the requested object(s) across all namespaces")
+	resourcesCmd.Flags().StringVarP(&resourcesOutputFormat, "output", "o", "", "Output format: '' (default) or 'name-only'")
 
 	if err := resourcesCmd.MarkFlagRequired("pattern"); err != nil {
 		panic(fmt.Sprintf("failed to mark pattern flag as required: %v", err))
