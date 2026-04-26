@@ -11,10 +11,24 @@ import (
 // outputFormat controls how the output is displayed
 var outputFormat string
 
+// formatPatternForDisplay wraps the pattern in single quotes for display
+// If the pattern is already wrapped in quotes, it returns it as-is
+func formatPatternForDisplay(pattern string) string {
+	// If already wrapped in single or double quotes, return as-is
+	if (strings.HasPrefix(pattern, "'") && strings.HasSuffix(pattern, "'")) ||
+		(strings.HasPrefix(pattern, "\"") && strings.HasSuffix(pattern, "\"")) {
+		return pattern
+	}
+
+	return fmt.Sprintf("'%s'", pattern)
+}
+
 // printResourceOccurrences prints occurrences based on the output format
 func printResourceOccurrences(occurrences []resource.Occurrence, pattern string) {
+	displayPattern := formatPatternForDisplay(pattern)
+
 	if len(occurrences) == 0 {
-		fmt.Printf("No occurrences of '%s' found.\n", pattern)
+		fmt.Printf("No occurrences of %s found.\n", displayPattern)
 		return
 	}
 
@@ -24,7 +38,7 @@ func printResourceOccurrences(occurrences []resource.Occurrence, pattern string)
 	}
 
 	// Default format
-	fmt.Printf("Found %d occurrence(s) of '%s':\n\n", len(occurrences), pattern)
+	fmt.Printf("Found %d occurrence(s) of %s:\n\n", len(occurrences), displayPattern)
 
 	for _, occurrence := range occurrences {
 		boldRed := color.New(color.FgRed).Add(color.Bold)
