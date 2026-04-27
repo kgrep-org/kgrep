@@ -61,42 +61,66 @@ func TestRootCommand(t *testing.T) {
 // Test that required flags are properly validated
 func TestResourcesCommand_MissingFlags(t *testing.T) {
 	_, err := executeCommand(rootCmd, "resources")
-	if err == nil || !strings.Contains(err.Error(), "required flag(s)") {
+	if err == nil {
+		t.Errorf("Expected error for missing required flags, got nil")
+		return
+	}
+	if !strings.Contains(err.Error(), "required flag(s)") {
 		t.Errorf("Expected error for missing required flags, got: %v", err)
 	}
 }
 
 func TestPodsCommand_MissingFlags(t *testing.T) {
 	_, err := executeCommand(rootCmd, "pods")
-	if err == nil || err.Error() != "required flag(s) \"pattern\" not set" {
+	if err == nil {
+		t.Errorf("Expected error for missing required flags, got nil")
+		return
+	}
+	if err.Error() != "required flag(s) \"pattern\" not set" {
 		t.Errorf("Expected error for missing required flags, got: %v", err)
 	}
 }
 
 func TestConfigMapsCommand_MissingFlags(t *testing.T) {
 	_, err := executeCommand(rootCmd, "configmaps")
-	if err == nil || err.Error() != "required flag(s) \"pattern\" not set" {
+	if err == nil {
+		t.Errorf("Expected error for missing required flags, got nil")
+		return
+	}
+	if err.Error() != "required flag(s) \"pattern\" not set" {
 		t.Errorf("Expected error for missing required flags, got: %v", err)
 	}
 }
 
 func TestSecretsCommand_MissingFlags(t *testing.T) {
 	_, err := executeCommand(rootCmd, "secrets")
-	if err == nil || err.Error() != "required flag(s) \"pattern\" not set" {
+	if err == nil {
+		t.Errorf("Expected error for missing required flags, got nil")
+		return
+	}
+	if err.Error() != "required flag(s) \"pattern\" not set" {
 		t.Errorf("Expected error for missing required flags, got: %v", err)
 	}
 }
 
 func TestServiceAccountsCommand_MissingFlags(t *testing.T) {
 	_, err := executeCommand(rootCmd, "serviceaccounts")
-	if err == nil || err.Error() != "required flag(s) \"pattern\" not set" {
+	if err == nil {
+		t.Errorf("Expected error for missing required flags, got nil")
+		return
+	}
+	if err.Error() != "required flag(s) \"pattern\" not set" {
 		t.Errorf("Expected error for missing required flags, got: %v", err)
 	}
 }
 
 func TestLogsCommand_MissingFlags(t *testing.T) {
 	_, err := executeCommand(rootCmd, "logs")
-	if err == nil || err.Error() != "required flag(s) \"pattern\" not set" {
+	if err == nil {
+		t.Errorf("Expected error for missing required flags, got nil")
+		return
+	}
+	if err.Error() != "required flag(s) \"pattern\" not set" {
 		t.Errorf("Expected error for missing required flags, got: %v", err)
 	}
 }
@@ -385,4 +409,126 @@ func TestAllNamespacesFlagAccepted_Pods(t *testing.T) {
 	if err != nil {
 		t.Logf("Expected error for kubeconfig/connectivity issues: %v", err)
 	}
+}
+func TestLogsCommand_MultiNamespace(t *testing.T) {
+	output, err := executeCommand(rootCmd, "logs", "--pattern", "test", "--namespace", "ns1,ns2")
+
+	if err != nil && strings.Contains(err.Error(), "--all-namespaces and --namespace cannot be used together") {
+		t.Errorf("Unexpected flag validation error for multi-namespace logs command: %v, output: %s", err, output)
+	}
+
+	if strings.Contains(output, "Usage:") {
+		t.Errorf("Expected no usage text for correct flag syntax, got: %s", output)
+	}
+
+	if err != nil {
+		t.Logf("Logs command returned error (acceptable for this test): %v", err)
+	}
+}
+
+func TestParseNamespaces(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		want    []string
+		wantErr bool
+	}{
+		{
+			name:    "empty input returns empty namespace",
+			input:   "",
+			want:    []string{""},
+			wantErr: false,
+		},
+		{
+			name:    "single namespace",
+			input:   "default",
+			want:    []string{"default"},
+			wantErr: false,
+		},
+		{
+			name:    "multiple namespaces",
+			input:   "ns1,ns2,ns3",
+			want:    []string{"ns1", "ns2", "ns3"},
+			wantErr: false,
+		},
+		{
+			name:    "namespaces with whitespace",
+			input:   "  ns1  ,  ns2  ,  ns3  ",
+			want:    []string{"ns1", "ns2", "ns3"},
+			wantErr: false,
+		},
+		{
+			name:    "duplicate namespaces are deduplicated",
+			input:   "ns1,ns1,ns2",
+			want:    []string{"ns1", "ns2"},
+			wantErr: false,
+		},
+		{
+			name:    "duplicates with whitespace",
+			input:   "ns1,  ns1  , ns2",
+			want:    []string{"ns1", "ns2"},
+			wantErr: false,
+		},
+		{
+			name:    "trailing comma is skipped",
+			input:   "ns1,ns2,",
+			want:    []string{"ns1", "ns2"},
+			wantErr: false,
+		},
+		{
+			name:    "leading comma is skipped",
+			input:   ",ns1,ns2",
+			want:    []string{"ns1", "ns2"},
+			wantErr: false,
+		},
+		{
+			name:    "all-whitespace tokens are skipped",
+			input:   "ns1,   , ns2",
+			want:    []string{"ns1", "ns2"},
+			wantErr: false,
+		},
+		{
+			name:    "only whitespace returns error",
+			input:   "   ,   ,   ",
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "comma only returns error",
+			input:   ",",
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "preserves order for deduplication",
+			input:   "ns2,ns1,ns2,ns1",
+			want:    []string{"ns2", "ns1"},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseNamespaces(tt.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseNamespaces(%q) error = %v, wantErr %v", tt.input, err, tt.wantErr)
+				return
+			}
+			if !slicesEqual(got, tt.want) {
+				t.Errorf("parseNamespaces(%q) = %v, want %v", tt.input, got, tt.want)
+			}
+		})
+	}
+}
+
+func slicesEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i, v := range a {
+		if v != b[i] {
+			return false
+		}
+	}
+	return true
 }
