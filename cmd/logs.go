@@ -11,10 +11,39 @@ import (
 
 var (
 	logsNamespace string
-	logsResource  string
-	logsPattern   string
-	logsSortBy    string
+	logsResource string
+	logsPattern string
+	logsSortBy string
 )
+
+// parseNamespaces parses a comma-separated list of namespaces,
+// trimming whitespace, skipping empty tokens, and deduplicating while preserving order.
+func parseNamespaces(raw string) ([]string, error) {
+	if raw == "" {
+		return []string{""}, nil
+	}
+
+	var namespaces []string
+	seen := make(map[string]struct{})
+
+	for _, tok := range strings.Split(raw, ",") {
+		t := strings.TrimSpace(tok)
+		if t == "" {
+			continue
+		}
+		if _, ok := seen[t]; ok {
+			continue
+		}
+		seen[t] = struct{}{}
+		namespaces = append(namespaces, t)
+	}
+
+	if len(namespaces) == 0 {
+		return nil, fmt.Errorf("invalid namespace list: no valid namespaces provided")
+	}
+
+	return namespaces, nil
+}
 
 var logsCmd = &cobra.Command{
 	Use:   "logs",
@@ -34,32 +63,39 @@ var logsCmd = &cobra.Command{
 			return fmt.Errorf("failed to create log grepper: %v", err)
 		}
 
-		var messages []log.Message
+		namespaces, err := parseNamespaces(logsNamespace)
+		if err != nil {
+			return err
+		}
 
-		if logsNamespace != "" {
-			if logsResource != "" {
-				messages, err = grepper.Grep(logsNamespace, logsResource, logsPattern, logsSortBy)
-				if err != nil {
-					return fmt.Errorf("failed to search logs: %v", err)
+		var messages []log.Message
+		for _, ns := range namespaces {
+			var nsMessages []log.Message
+			if ns != "" {
+				if logsResource != "" {
+					nsMessages, err = grepper.Grep(ns, logsResource, logsPattern, logsSortBy)
+				} else {
+					nsMessages, err = grepper.GrepNamespace(ns, logsPattern, logsSortBy)
 				}
 			} else {
-				messages, err = grepper.GrepNamespace(logsNamespace, logsPattern, logsSortBy)
-				if err != nil {
-					return fmt.Errorf("failed to search logs: %v", err)
+				if logsResource != "" {
+					nsMessages, err = grepper.GrepResourceWithoutNamespace(logsResource, logsPattern, logsSortBy)
+				} else {
+					nsMessages, err = grepper.GrepWithoutNamespace(logsPattern, logsSortBy)
 				}
 			}
-		} else {
-			if logsResource != "" {
-				messages, err = grepper.GrepResourceWithoutNamespace(logsResource, logsPattern, logsSortBy)
-				if err != nil {
-					return fmt.Errorf("failed to search logs: %v", err)
+
+			if err != nil {
+				if ns != "" {
+					return fmt.Errorf("failed to search logs in namespace %q: %v", ns, err)
 				}
-			} else {
-				messages, err = grepper.GrepWithoutNamespace(logsPattern, logsSortBy)
-				if err != nil {
-					return fmt.Errorf("failed to search logs: %v", err)
-				}
+				return fmt.Errorf("failed to search logs: %v", err)
 			}
+			messages = append(messages, nsMessages...)
+		}
+
+		if len(namespaces) > 1 {
+			messages = grepper.SortMessages(messages, logsSortBy)
 		}
 
 		printLogMessages(messages, logsPattern)
@@ -71,7 +107,7 @@ var logsCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(logsCmd)
 
-	logsCmd.Flags().StringVarP(&logsNamespace, "namespace", "n", "", "The Kubernetes namespace")
+	logsCmd.Flags().StringVarP(&logsNamespace, "namespace", "n", "", "The Kubernetes namespace(s), comma-separated")
 	logsCmd.Flags().StringVarP(&logsResource, "resource", "r", "", "The Kubernetes resource name")
 	logsCmd.Flags().StringVarP(&logsPattern, "pattern", "p", "", "grep search pattern")
 	logsCmd.Flags().StringVarP(&logsSortBy, "sort-by", "s", "timestamp", "Sort by: timestamp, message")
