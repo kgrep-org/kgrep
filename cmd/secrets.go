@@ -9,9 +9,10 @@ import (
 )
 
 var (
-	secretsNamespace     string
-	secretsPattern       string
+	secretsNamespace string
+	secretsPattern string
 	secretsAllNamespaces bool
+	secretsOutputFormat string
 )
 
 var secretsCmd = &cobra.Command{
@@ -54,6 +55,7 @@ var secretsCmd = &cobra.Command{
 			}
 		}
 
+		outputFormat = secretsOutputFormat
 		printResourceOccurrences(occurrences, secretsPattern)
 
 		return nil
@@ -66,6 +68,7 @@ func init() {
 	secretsCmd.Flags().StringVarP(&secretsNamespace, "namespace", "n", "", "The Kubernetes namespace")
 	secretsCmd.Flags().StringVarP(&secretsPattern, "pattern", "p", "", "grep search pattern")
 	secretsCmd.Flags().BoolVarP(&secretsAllNamespaces, "all-namespaces", "A", false, "If present, list the requested object(s) across all namespaces")
+	secretsCmd.Flags().StringVarP(&secretsOutputFormat, "output", "o", "", "Output format: '' (default) or 'name-only'")
 
 	if err := secretsCmd.MarkFlagRequired("pattern"); err != nil {
 		panic(fmt.Sprintf("failed to mark pattern flag as required: %v", err))

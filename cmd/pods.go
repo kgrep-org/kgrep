@@ -8,9 +8,10 @@ import (
 )
 
 var (
-	podsNamespace     string
-	podsPattern       string
+	podsNamespace string
+	podsPattern string
 	podsAllNamespaces bool
+	podsOutputFormat string
 )
 
 var podsCmd = &cobra.Command{
@@ -51,6 +52,7 @@ var podsCmd = &cobra.Command{
 			}
 		}
 
+		outputFormat = podsOutputFormat
 		printResourceOccurrences(occurrences, podsPattern)
 
 		return nil
@@ -63,6 +65,7 @@ func init() {
 	podsCmd.Flags().StringVarP(&podsNamespace, "namespace", "n", "", "The Kubernetes namespace")
 	podsCmd.Flags().StringVarP(&podsPattern, "pattern", "p", "", "grep search pattern")
 	podsCmd.Flags().BoolVarP(&podsAllNamespaces, "all-namespaces", "A", false, "If present, list the requested object(s) across all namespaces")
+	podsCmd.Flags().StringVarP(&podsOutputFormat, "output", "o", "", "Output format: '' (default) or 'name-only'")
 
 	if err := podsCmd.MarkFlagRequired("pattern"); err != nil {
 		panic(fmt.Sprintf("failed to mark pattern flag as required: %v", err))
