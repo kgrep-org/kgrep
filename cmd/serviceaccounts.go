@@ -8,9 +8,10 @@ import (
 )
 
 var (
-	serviceaccountsNamespace     string
-	serviceaccountsPattern       string
+	serviceaccountsNamespace string
+	serviceaccountsPattern string
 	serviceaccountsAllNamespaces bool
+	serviceaccountsOutputFormat string
 )
 
 var serviceaccountsCmd = &cobra.Command{
@@ -51,6 +52,7 @@ var serviceaccountsCmd = &cobra.Command{
 			}
 		}
 
+		outputFormat = serviceaccountsOutputFormat
 		printResourceOccurrences(occurrences, serviceaccountsPattern)
 
 		return nil
@@ -63,6 +65,7 @@ func init() {
 	serviceaccountsCmd.Flags().StringVarP(&serviceaccountsNamespace, "namespace", "n", "", "The Kubernetes namespace")
 	serviceaccountsCmd.Flags().StringVarP(&serviceaccountsPattern, "pattern", "p", "", "grep search pattern")
 	serviceaccountsCmd.Flags().BoolVarP(&serviceaccountsAllNamespaces, "all-namespaces", "A", false, "If present, list the requested object(s) across all namespaces")
+	serviceaccountsCmd.Flags().StringVarP(&serviceaccountsOutputFormat, "output", "o", "", "Output format: '' (default) or 'name-only'")
 
 	if err := serviceaccountsCmd.MarkFlagRequired("pattern"); err != nil {
 		panic(fmt.Sprintf("failed to mark pattern flag as required: %v", err))
