@@ -100,37 +100,6 @@ func TestLogGrepper_ResourceFiltering(t *testing.T) {
 	assert.Equal(t, "app log with pattern", messages[0].Message)
 }
 
-func TestLogGrepper_SortMessages(t *testing.T) {
-	messages := []Message{
-		{PodName: "pod-b", ContainerName: "c1", Message: "zebra message"},
-		{PodName: "pod-a", ContainerName: "c2", Message: "alpha message"},
-		{PodName: "pod-a", ContainerName: "c1", Message: "beta message"},
-	}
-
-	grepper := &Grepper{}
-
-	t.Run("Sort by Message", func(t *testing.T) {
-		input := make([]Message, len(messages))
-		copy(input, messages)
-		sorted := grepper.sortMessages(input, "MESSAGE")
-		assert.Equal(t, "alpha message", sorted[0].Message)
-		assert.Equal(t, "beta message", sorted[1].Message)
-		assert.Equal(t, "zebra message", sorted[2].Message)
-	})
-
-	t.Run("Sort by POD_AND_CONTAINER", func(t *testing.T) {
-		input := make([]Message, len(messages))
-		copy(input, messages)
-		sorted := grepper.sortMessages(input, "POD_AND_CONTAINER")
-		assert.Equal(t, "pod-a", sorted[0].PodName)
-		assert.Equal(t, "c1", sorted[0].ContainerName)
-		assert.Equal(t, "pod-a", sorted[1].PodName)
-		assert.Equal(t, "c2", sorted[1].ContainerName)
-		assert.Equal(t, "pod-b", sorted[2].PodName)
-		assert.Equal(t, "c1", sorted[2].ContainerName)
-	})
-}
-
 func TestLogGrepper_GetPodLogs_Error(t *testing.T) {
 	fakeLogReader := newFakeLogReader()
 	pod1 := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "pod1", Namespace: "test"}}
@@ -155,4 +124,31 @@ func TestLogGrepper_SearchLogs_EmptyPattern(t *testing.T) {
 	assert.Equal(t, "line 1", messages[0].Message)
 	assert.Equal(t, "line 2", messages[1].Message)
 	assert.Equal(t, "line 3", messages[2].Message)
+}
+
+func TestLogGrepper_SortMessages(t *testing.T) {
+	messages := []Message{
+		{PodName: "pod-b", ContainerName: "c1", LineNumber: 10, Message: "zebra"},
+		{PodName: "pod-a", ContainerName: "c2", LineNumber: 5, Message: "alpha"},
+		{PodName: "pod-a", ContainerName: "c1", LineNumber: 1, Message: "beta"},
+	}
+
+	grepper := &Grepper{}
+
+	t.Run("Sort by Message", func(t *testing.T) {
+		sorted := grepper.SortMessages(messages, "MESSAGE")
+		assert.Equal(t, "alpha", sorted[0].Message)
+		assert.Equal(t, "beta", sorted[1].Message)
+		assert.Equal(t, "zebra", sorted[2].Message)
+	})
+
+	t.Run("Sort by POD_AND_CONTAINER", func(t *testing.T) {
+		sorted := grepper.SortMessages(messages, "POD_AND_CONTAINER")
+		assert.Equal(t, "pod-a", sorted[0].PodName)
+		assert.Equal(t, "c1", sorted[0].ContainerName)
+		assert.Equal(t, "pod-a", sorted[1].PodName)
+		assert.Equal(t, "c2", sorted[1].ContainerName)
+		assert.Equal(t, "pod-b", sorted[2].PodName)
+		assert.Equal(t, "c1", sorted[2].ContainerName)
+	})
 }
