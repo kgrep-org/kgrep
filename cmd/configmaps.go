@@ -8,9 +8,10 @@ import (
 )
 
 var (
-	configmapsNamespace     string
-	configmapsPattern       string
+	configmapsNamespace string
+	configmapsPattern string
 	configmapsAllNamespaces bool
+	configmapsOutputFormat string
 )
 
 var configmapsCmd = &cobra.Command{
@@ -51,6 +52,7 @@ var configmapsCmd = &cobra.Command{
 			}
 		}
 
+		outputFormat = configmapsOutputFormat
 		printResourceOccurrences(occurrences, configmapsPattern)
 
 		return nil
@@ -63,6 +65,7 @@ func init() {
 	configmapsCmd.Flags().StringVarP(&configmapsNamespace, "namespace", "n", "", "The Kubernetes namespace")
 	configmapsCmd.Flags().StringVarP(&configmapsPattern, "pattern", "p", "", "grep search pattern")
 	configmapsCmd.Flags().BoolVarP(&configmapsAllNamespaces, "all-namespaces", "A", false, "If present, list the requested object(s) across all namespaces")
+	configmapsCmd.Flags().StringVarP(&configmapsOutputFormat, "output", "o", "", "Output format: '' (default) or 'name-only'")
 
 	if err := configmapsCmd.MarkFlagRequired("pattern"); err != nil {
 		panic(fmt.Sprintf("failed to mark pattern flag as required: %v", err))

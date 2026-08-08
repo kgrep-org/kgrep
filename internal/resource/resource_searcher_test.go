@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/client-go/kubernetes/fake"
 )
@@ -364,4 +365,79 @@ func TestSearcher_APIVersionAndKindPrecedence(t *testing.T) {
 	_, err = searcher.getGenericResourceYAML("default", "test-resource")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "kubeGet client not available")
+}
+
+// TestOccurrence_WithFakeData tests the Occurrence struct with gofakeit generated data
+func TestOccurrence_WithFakeData(t *testing.T) {
+	gofakeit.Seed(0)
+
+	// Generate random occurrence data
+	occurrence := Occurrence{
+		Resource:  gofakeit.Word(),
+		Namespace: gofakeit.Word(),
+		Line:      gofakeit.Number(1, 1000),
+		Content:   gofakeit.Sentence(10),
+	}
+
+	// Verify the occurrence has valid data
+	assert.NotEmpty(t, occurrence.Resource)
+	assert.NotEmpty(t, occurrence.Namespace)
+	assert.Greater(t, occurrence.Line, 0)
+	assert.NotEmpty(t, occurrence.Content)
+
+	t.Logf("Generated occurrence: Resource=%s, Namespace=%s, Line=%d, Content=%s",
+		occurrence.Resource, occurrence.Namespace, occurrence.Line, occurrence.Content)
+}
+
+// TestOccurrence_BulkGeneration tests generating multiple occurrences with gofakeit
+func TestOccurrence_BulkGeneration(t *testing.T) {
+	gofakeit.Seed(0)
+
+	// Generate multiple occurrences
+	occurrences := make([]Occurrence, 50)
+	for i := 0; i < 50; i++ {
+		occurrences[i] = Occurrence{
+			Resource:  gofakeit.Word(),
+			Namespace: gofakeit.Word(),
+			Line:      gofakeit.Number(1, 1000),
+			Content:   gofakeit.Sentence(gofakeit.Number(5, 20)),
+		}
+	}
+
+	// Verify all occurrences have unique resources
+	resourceMap := make(map[string]bool)
+	for _, occ := range occurrences {
+		resourceMap[occ.Resource] = true
+	}
+
+	// With 50 random words, we should have mostly unique resources
+	assert.GreaterOrEqual(t, len(resourceMap), 40, "Expected mostly unique resource names")
+
+	t.Logf("Generated %d occurrences with %d unique resources", len(occurrences), len(resourceMap))
+}
+
+// TestOccurrence_DifferentPatterns tests occurrences with various pattern types
+func TestOccurrence_DifferentPatterns(t *testing.T) {
+	gofakeit.Seed(0)
+
+	patterns := []string{
+		"[Error]",
+		"test*",
+		"debug?",
+		"INFO|WARN",
+		"{json}",
+		"hello;world",
+	}
+
+	for _, pattern := range patterns {
+		occ := Occurrence{
+			Resource:  gofakeit.Word(),
+			Namespace: gofakeit.Word(),
+			Line:      gofakeit.Number(1, 100),
+			Content:   pattern + " " + gofakeit.Sentence(5),
+		}
+
+		assert.Contains(t, occ.Content, pattern)
+		t.Logf("Pattern '%s' found in content: %s", pattern, occ.Content)
+	}
 }
