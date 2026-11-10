@@ -1,6 +1,7 @@
 version: 2
 updates:
   - package-ecosystem: "gomod"
+    milestone: 4
     directory: "/"
     schedule:
       interval: "daily"
@@ -8,6 +9,7 @@ updates:
       - dependency-type: "all"
     open-pull-requests-limit: 1
   - package-ecosystem: "github-actions"
+    milestone: 4
     directory: "/"
     schedule:
       interval: "daily"
