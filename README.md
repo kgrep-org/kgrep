@@ -1,8 +1,7 @@
 # kgrep
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Unit Tests](https://github.com/hbelmiro/kgrep/actions/workflows/unit-tests.yaml/badge.svg)](https://github.com/hbelmiro/kgrep/actions/workflows/unit-tests.yaml)
-[![Integration Tests](https://github.com/hbelmiro/kgrep/actions/workflows/integration-tests.yaml/badge.svg)](https://github.com/hbelmiro/kgrep/actions/workflows/integration-tests.yaml)
+[![Tests](https://github.com/kgrep-org/kgrep/actions/workflows/tests.yaml/badge.svg)](https://github.com/kgrep-org/kgrep/actions/workflows/tests.yaml)
 [![Latest Release](https://img.shields.io/github/v/release/hbelmiro/kgrep)](https://github.com/hbelmiro/kgrep/releases)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/hbelmiro/kgrep)
 
